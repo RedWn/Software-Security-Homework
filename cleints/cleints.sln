@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34024.191
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cleints", "cleints\cleints.csproj", "{4C2ED7D6-1A76-446C-BE31-15145896465D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "client", "cleints\client.csproj", "{4C2ED7D6-1A76-446C-BE31-15145896465D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "server", "..\server\server\server.csproj", "{15E35A07-14D8-444B-9FFB-05349A723A64}"
 EndProject
