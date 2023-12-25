@@ -30,8 +30,8 @@ namespace server
         {
             while (_isRunning)
             {
-                Console.Write("Waiting for a connection...");
-
+               Logger.Log(LogType.info2,"Waiting for a connection...");
+                Logger.WriteLogs();
                 TcpClient newClient = _server.AcceptTcpClient();
                 Console.WriteLine("Connected!");
                 Thread t = new(new ParameterizedThreadStart(HandleClient));
@@ -60,9 +60,11 @@ namespace server
 
         public async void parseMessage(string message)
         {
-            Console.WriteLine("message recieved");
+            Logger.Log(LogType.warning, "message recieved");
+            Logger.WriteLogs();
             Request? request = Newtonsoft.Json.JsonConvert.DeserializeObject<Request>(message);
-            Console.WriteLine("decoding complete!");
+            Logger.Log(LogType.info2, "decoding complete!");
+            Logger.WriteLogs();
         }
     }
 }
