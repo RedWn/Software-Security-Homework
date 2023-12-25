@@ -40,11 +40,12 @@ namespace Cleints
             String sData;
             while (_isConnected)
             {      
-                Console.Write("> Press Enter to send file data");
+                Logger.Log(LogType.info1, "Press Enter to send file data");
+                Logger.WriteLogs();
                 Console.ReadLine();
-                sData = File.ReadAllText("tester.txt");
+                string projectDir = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
+                sData = File.ReadAllText(projectDir + "\\tester.txt");
                 Package? package = packageData(sData);
-                Console.WriteLine(package.body.ToString());
                 package = encryptData(package, Coder.Mode.AESsecretKey); //temporary
                 sendData(package);
             }
