@@ -37,31 +37,39 @@ namespace Cleints
             _sReader = new StreamReader(_client.GetStream(), Encoding.ASCII);
             _sessionKey = Coder.getSessionKey();
             _isConnected = true;
-            String sData;
             while (_isConnected)
             {      
                 Logger.Log(LogType.info1, "Press Enter to send file data");
                 Logger.WriteLogs();
                 Console.ReadLine();
                 string projectDir = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
-                sData = File.ReadAllText(projectDir + "\\tester.txt");
-                Package? package = packageData(sData);
-                package = encryptData(package, Coder.Mode.AESsecretKey); //temporary
-                sendData(package);
+                string sData = File.ReadAllText(projectDir + "\\tester.txt");
+                string context="";
+                //the context should signify why is the message being sent
+                sendMessage(sData, context, Coder.Mode.AESsecretKey);
             }
         }
+
+        public void sendMessage(string data, string context, Coder.Mode mode) {
+            Package? package = packageData(data);
+            package = encryptData(package, mode);
+            sendData(package);
+        }
+
         public Package packageData(string data) {
             Dictionary<string, object> dictionary = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
             Package package = new(dictionary["encryption"].ToString(), dictionary["type"].ToString());
             package.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(dictionary["body"].ToString());
             return package;
         }
+
         public Package encryptData(Package data, Coder.Mode mode) {
             string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data.body);
             data.body.Clear();
             data.body["encrypted"] = Coder.encode(temp, _sessionKey, mode);
             return data;
         }
+
         public void sendData(Package data) {
             _sWriter = new StreamWriter(_client.GetStream(), Encoding.ASCII);
             string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data);
