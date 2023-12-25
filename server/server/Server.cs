@@ -31,6 +31,7 @@ namespace server
             while (_isRunning)
             {
                 Console.Write("Waiting for a connection...");
+
                 TcpClient newClient = _server.AcceptTcpClient();
                 Console.WriteLine("Connected!");
                 Thread t = new(new ParameterizedThreadStart(HandleClient));
@@ -45,9 +46,15 @@ namespace server
             String sData = null;
             while (client.client.Connected)
             {
-                sData = client.sReader.ReadLine();
-                Console.WriteLine(client.IPEndPoint.Address + " > " + sData);
-                parseMessage(sData);
+                try
+                {
+                    sData = client.sReader.ReadLine();
+                    Console.WriteLine(client.IPEndPoint.Address + " > " + sData);
+                    parseMessage(sData);
+                }catch (Exception)
+                {
+                    client.client.Close();
+                }
             }
         }
 

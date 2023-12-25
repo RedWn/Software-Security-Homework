@@ -20,8 +20,14 @@ namespace Cleints
         {
             _client = new TcpClient();
             _client.Connect(ipAddress, portNum);
-
-            HandleCommunication();
+            try
+            {
+                HandleCommunication();
+            }catch (Exception)
+            {
+                _isConnected = false;
+                _client.Close();
+            }
         }
 
         public void HandleCommunication()
@@ -31,6 +37,7 @@ namespace Cleints
 
             _isConnected = true;
             String sData = null;
+          
             while (_isConnected)
             {
                 Console.Write("> ");
