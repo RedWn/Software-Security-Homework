@@ -5,11 +5,12 @@ namespace Clients
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("let's connect to Multi-Threaded TCP Server");
-            Console.WriteLine("Enter server IP:");
-            String ip = Console.ReadLine();
-
-            Console.WriteLine("Enter Port:");
+            Logger.Log(LogType.info1, "let's connect to Multi-Threaded TCP Server");
+            Logger.Log(LogType.info2, "Enter server IP:");
+            Logger.WriteLogs();
+            string ip = Console.ReadLine();
+            Logger.Log(LogType.info2, "Enter Port:");
+            Logger.WriteLogs();
             int port = Int32.Parse(Console.ReadLine());
 
             Client client = new(ip, port);
