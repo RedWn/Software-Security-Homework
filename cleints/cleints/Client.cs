@@ -53,7 +53,10 @@ namespace Cleints
         public void sendMessage(string data, string context, Coder.Mode mode) {
             Package? package = packageData(data);
             package = encryptData(package, mode);
-            sendData(package);
+            _sWriter = new StreamWriter(_client.GetStream(), Encoding.ASCII);
+            _sWriter.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(package));
+            _sWriter.Flush();
+            Console.Write("> Sent!");
         }
 
         public Package packageData(string data) {
@@ -68,14 +71,6 @@ namespace Cleints
             data.body.Clear();
             data.body["encrypted"] = Coder.encode(temp, _sessionKey, mode);
             return data;
-        }
-
-        public void sendData(Package data) {
-            _sWriter = new StreamWriter(_client.GetStream(), Encoding.ASCII);
-            string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data);
-            _sWriter.WriteLine(temp);
-            _sWriter.Flush();
-            Console.Write("> Sent!");
         }
     }
 }

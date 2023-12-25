@@ -43,14 +43,12 @@ namespace server
         {
             Clientte client = new(obj);
             clients.Add(client);
-            String sData = null;
             while (client.client.Connected)
             {
                 try
                 {
-                    sData = client.sReader.ReadLine();
-                    Console.WriteLine(client.IPEndPoint.Address + " > " + sData);
-                    parseMessage(sData);
+                    recieveMessage(client);
+                    //Console.WriteLine(client.IPEndPoint.Address + " > " + sData);
                 }catch (Exception)
                 {
                     client.client.Close();
@@ -58,13 +56,33 @@ namespace server
             }
         }
 
-        public async void parseMessage(string message)
-        {
+        public async void recieveMessage(Clientte client) {
+            string data = client.sReader.ReadLine();
             Logger.Log(LogType.warning, "message recieved");
             Logger.WriteLogs();
-            Request? request = Newtonsoft.Json.JsonConvert.DeserializeObject<Request>(message);
-            Logger.Log(LogType.info2, "decoding complete!");
+
+            Package message = packageMessage(data);
+
+            message = decryptMessage(message); //still under construction
+            Logger.Log(LogType.info2, "decryption complete!");
+            Logger.Log(LogType.info2, Newtonsoft.Json.JsonConvert.SerializeObject(message));
             Logger.WriteLogs();
+        }
+
+        public Package packageMessage(string data)
+        {
+            Dictionary<string, object> dictionary = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
+            Package package = new(dictionary["encryption"].ToString(), dictionary["type"].ToString());
+            package.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(dictionary["body"].ToString());
+            return package;
+        }
+
+        public Package decryptMessage(Package data) {
+            string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data.body);
+            data.body.Clear();
+            //string decodedBody = Coder.decode(temp, _sessionKey, mode);
+            //data.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedBody);
+            return data;
         }
     }
 }
