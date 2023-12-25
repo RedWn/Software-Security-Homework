@@ -12,10 +12,13 @@ namespace server
     {
         private TcpListener _server;
         private Boolean _isRunning;
+        private List<Clientte> clients;
 
-        public TcpServer(int port)
+        public TcpServer(string ip, int port)
         {
-            _server = new TcpListener(IPAddress.Any, port);
+            clients = new List<Clientte>();
+            IPAddress localAddr = IPAddress.Parse(ip);
+            _server = new TcpListener(localAddr, port);
             _server.Start();
 
             _isRunning = true;
@@ -27,25 +30,32 @@ namespace server
         {
             while (_isRunning)
             {
+                Console.Write("Waiting for a connection...");
                 TcpClient newClient = _server.AcceptTcpClient();
-                Thread t = new Thread(new ParameterizedThreadStart(HandleClient));
+                Console.WriteLine("Connected!");
+                Thread t = new(new ParameterizedThreadStart(HandleClient));
                 t.Start(newClient);
             }
         }
 
         public void HandleClient(object obj)
         {
-            TcpClient client = (TcpClient)obj;    
-            StreamWriter sWriter = new StreamWriter(client.GetStream(), Encoding.ASCII);
-            StreamReader sReader = new StreamReader(client.GetStream(), Encoding.ASCII);
-            Boolean bClientConnected = true;
+            Clientte client = new(obj);
+            clients.Add(client);
             String sData = null;
-
-            while (bClientConnected)
+            while (client.client.Connected)
             {
-                sData = sReader.ReadLine();
-                Console.WriteLine("Client > "  + sData);
+                sData = client.sReader.ReadLine();
+                Console.WriteLine(client.IPEndPoint.Address + " > " + sData);
+                parseMessage(sData);
             }
+        }
+
+        public async void parseMessage(string message)
+        {
+            Console.WriteLine("message recieved");
+            Request? request = Newtonsoft.Json.JsonConvert.DeserializeObject<Request>(message);
+            Console.WriteLine("decoding complete!");
         }
     }
 }
