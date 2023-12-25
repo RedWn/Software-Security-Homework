@@ -12,32 +12,33 @@ namespace Cleints
     {
         private TcpClient _client;
         private StreamReader _sReader;
-    private StreamWriter _sWriter;
+        private StreamWriter _sWriter;
 
-    private Boolean _isConnected;
+        private Boolean _isConnected;
 
-    public Client(String ipAddress, int portNum)
-    {
-        _client = new TcpClient();
-        _client.Connect(ipAddress, portNum);
-
-        HandleCommunication();
-    }
-
-    public void HandleCommunication()
-    {
-        _sReader = new StreamReader(_client.GetStream(), Encoding.ASCII);
-        _sWriter = new StreamWriter(_client.GetStream(), Encoding.ASCII);
-
-        _isConnected = true;
-        String sData = null;
-        while (_isConnected)
+        public Client(String ipAddress, int portNum)
         {
-            Console.Write("> ");
-            sData = Console.ReadLine();
-            _sWriter.WriteLine(sData);
-            _sWriter.Flush();
+            _client = new TcpClient();
+            _client.Connect(ipAddress, portNum);
+
+            HandleCommunication();
+        }
+
+        public void HandleCommunication()
+        {
+            _sReader = new StreamReader(_client.GetStream(), Encoding.ASCII);
+            _sWriter = new StreamWriter(_client.GetStream(), Encoding.ASCII);
+
+            _isConnected = true;
+            String sData = null;
+            while (_isConnected)
+            {
+                Console.Write("> ");
+                Console.ReadLine();
+                sData = File.ReadAllText("tester.txt");
+                _sWriter.WriteLine(sData);
+                _sWriter.Flush();
+            }
         }
     }
-} 
 }

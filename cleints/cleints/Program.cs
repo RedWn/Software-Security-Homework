@@ -12,7 +12,7 @@ namespace Clients
             Console.WriteLine("Enter Port:");
             int port = Int32.Parse(Console.ReadLine());
 
-            Client client = new Client(ip, port);
+            Client client = new(ip, port);
         }
     }
 }
