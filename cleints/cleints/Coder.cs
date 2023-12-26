@@ -77,19 +77,20 @@ public static class Coder
         string plainText = null;
 
         // Create an Aes object with the specified key
-        using (Aes aesAlg = Aes.Create())
+        using (Aes aes = Aes.Create())
         {
-            aesAlg.Key = keyBytes;
+            aes.Key = keyBytes;
 
             // Get the initialization vector from the encrypted data
-            aesAlg.IV = new byte[aesAlg.BlockSize / 8];
-            Array.Copy(cipherBytes, 0, aesAlg.IV, 0, aesAlg.IV.Length);
+            byte[] temp = new byte[aes.BlockSize / 8];
+            Array.Copy(cipherBytes, 0, temp, 0, temp.Length);
+            aes.IV = temp;
 
             // Create a decryptor to perform the stream transform
-            ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+            ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
 
             // Create the streams used for decryption
-            using (MemoryStream msDecrypt = new MemoryStream(cipherBytes, aesAlg.IV.Length, cipherBytes.Length - aesAlg.IV.Length))
+            using (MemoryStream msDecrypt = new MemoryStream(cipherBytes, aes.IV.Length, cipherBytes.Length - aes.IV.Length))
             {
                 using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
                 {
