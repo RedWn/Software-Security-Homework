@@ -25,7 +25,8 @@ namespace Cleints
             try
             {
                 HandleCommunication();
-            }catch (Exception)
+            }
+            catch (Exception)
             {
                 _isConnected = false;
                 _client.Close();
@@ -38,13 +39,11 @@ namespace Cleints
             _sessionKey = Coder.getSessionKey();
             _isConnected = true;
             while (_isConnected)
-            {      
-                Logger.Log(LogType.info1, "Press Enter to send file data");
+            {
+                Logger.Log(LogType.info1, "Type the message and press Enter to send file data");
                 Logger.WriteLogs();
-                Console.ReadLine();
-                string projectDir = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
-                string sData = File.ReadAllText(projectDir + "\\tester.txt");
-                string context="";
+                string sData = ReadMultipleLines();
+                string context = "";
                 //the context should signify why is the message being sent
                 sendMessage(sData, context);
                 receiveMessage();
@@ -92,7 +91,8 @@ namespace Cleints
         #endregion
 
         #region SEND
-        public void sendMessage(string data, string context) {
+        public void sendMessage(string data, string context)
+        {
             Package? package = packageData(data);
             package = encryptData(package, package.encryption);
             _sWriter = new StreamWriter(_client.GetStream(), Encoding.ASCII);
@@ -101,20 +101,33 @@ namespace Cleints
             Console.Write("> Sent!");
         }
 
-        public Package packageData(string data) {
+        public Package packageData(string data)
+        {
             Dictionary<string, object> dictionary = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
             Package package = new(dictionary["encryption"].ToString(), dictionary["type"].ToString());
             package.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(dictionary["body"].ToString());
             return package;
         }
 
-        public Package encryptData(Package data, string mode) {
+        public Package encryptData(Package data, string mode)
+        {
             string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data.body);
             data.body.Clear();
             _sessionKey = File.ReadAllBytes("D:\\Prog\\ISSHW\\cleints\\cleints\\key.txt"); //TODO: remove this
             data.body["encrypted"] = Coder.encode(temp, _sessionKey, mode);
             return data;
         }
-#endregion
+        #endregion
+
+        public static string ReadMultipleLines()
+        {
+            StringBuilder sb = new StringBuilder();
+            string line;
+            while ((line = Console.ReadLine()) != "")
+            {
+                sb.AppendLine(line);
+            }
+            return sb.ToString();
+        }
     }
 }

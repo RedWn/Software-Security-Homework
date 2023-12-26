@@ -10,7 +10,10 @@ public static class Coder
     {
         if (data == null || data.Length <= 0)
             throw new ArgumentNullException("plainText");
-
+        if (mode == "NA")
+        {
+            return data;
+        }
         byte[] plainBytes = Encoding.UTF8.GetBytes(data);
 
         switch (mode)
@@ -30,7 +33,10 @@ public static class Coder
     {
         if (data == null || data.Length <= 0)
             throw new ArgumentNullException("plainText");
-
+        if (mode == "NA")
+        {
+            return data;
+        }
         byte[] cipherBytes = Convert.FromBase64String(data); ;
 
         switch (mode)
