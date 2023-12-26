@@ -1,0 +1,8 @@
+﻿{
+    "encryption": "NA",
+    "type": "login",
+    "body": {
+        "email": "testest",
+        "password": 123456
+    }
+}
