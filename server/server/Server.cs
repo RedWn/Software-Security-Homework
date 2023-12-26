@@ -69,24 +69,24 @@ namespace server
                 case "handshake":
                     message = client.decryptMessage(message, message.encryption);
                     client.sessionKey = Convert.FromBase64String(message.body["publicKey"]);
-                    sendMessage(client, "{\"encryption\":\"NA\",\"type\":\"handshake\",\"body\":{\"publicKey\": \"key set\"}}", "NA"); //test only
+                    sendMessage(client, "{\"encryption\":\"NA\",\"type\":\"handshake\",\"body\":{\"publicKey\": \"key set\"}}");
                     break;
                 case "sessionKey":
                     message = client.decryptMessage(message, message.encryption);
                     client.sessionKey = Convert.FromBase64String(message.body["key"]);
-                    sendMessage(client, "{\"encryption\":\"NA\",\"type\":\"generic\",\"body\":{\"message\": \"key set\"}}", "NA"); //test only
+                    sendMessage(client, "{\"encryption\":\"NA\",\"type\":\"generic\",\"body\":{\"message\": \"key set\"}}");
                     break;
                 case "generic":
                     message = client.decryptMessage(message, message.encryption);
-                    sendMessage(client, "{\"encryption\":\"NA\",\"type\":\"generic\",\"body\":{\"message\": \"received\"}}", "NA"); //test only
+                    sendMessage(client, "{\"encryption\":\"NA\",\"type\":\"generic\",\"body\":{\"message\": \"received\"}}");
                     break;
             }
         }
 
-        public void sendMessage(Clientte client, string data string mode)
+        public void sendMessage(Clientte client, string data)
         {
             Package? package = packageMessage(data);
-            package = client.encryptData(package, mode);
+            package = client.encryptData(package, package.encryption);
             client.sWriter.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(package));
             client.sWriter.Flush();
             Console.Write("> Sent!");
