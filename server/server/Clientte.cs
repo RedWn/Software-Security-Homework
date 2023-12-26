@@ -14,6 +14,7 @@ namespace server
         public IPEndPoint IPEndPoint;
         public StreamWriter sWriter;
         public StreamReader sReader;
+        public byte[] sessionKey;
 
         public Clientte(object obj)
         {

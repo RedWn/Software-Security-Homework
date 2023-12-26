@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Formats.Asn1;
 
 namespace server
 {
@@ -47,8 +48,7 @@ namespace server
             {
                 try
                 {
-                    recieveMessage(client);
-                    //Console.WriteLine(client.IPEndPoint.Address + " > " + sData);
+                    receiveMessage(client);
                 }catch (Exception)
                 {
                     client.client.Close();
@@ -56,17 +56,20 @@ namespace server
             }
         }
 
-        public async void recieveMessage(Clientte client) {
+        #region RECEIVE
+        public async void receiveMessage(Clientte client) {
             string data = client.sReader.ReadLine();
-            Logger.Log(LogType.warning, "message recieved");
+            Logger.Log(LogType.warning, "message received");
             Logger.WriteLogs();
 
             Package message = packageMessage(data);
 
-            message = decryptMessage(message); //still under construction
+            byte[] tempKey = loadTempKey();
+            message = decryptMessage(message, tempKey/*client.sessionKey*/, message.encryption); //still under construction
             Logger.Log(LogType.info2, "decryption complete!");
             Logger.Log(LogType.info2, Newtonsoft.Json.JsonConvert.SerializeObject(message));
             Logger.WriteLogs();
+            sendMessage(client, "{\"encryption\":\"AES\",\"type\":\"ACK\",\"body\":{\"message\": \"received\"}}", "","AES"); //test only
         }
 
         public Package packageMessage(string data)
@@ -77,12 +80,47 @@ namespace server
             return package;
         }
 
-        public Package decryptMessage(Package data) {
-            string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data.body);
+        public Package decryptMessage(Package data, byte[] key, string mode) {
+            //string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data.body);
+            string temp = new(data.body["encrypted"]);
             data.body.Clear();
-            //string decodedBody = Coder.decode(temp, _sessionKey, mode);
-            //data.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedBody);
+            string decodedBody = Coder.decode(temp, key, mode);
+            data.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedBody);
             return data;
         }
+
+        public byte[] loadTempKey()
+        {
+            return File.ReadAllBytes("D:\\Prog\\ISSHW\\cleints\\cleints\\key.txt");
+        }
+        #endregion
+
+        #region SEND
+        public void sendMessage(Clientte client, string data, string context, string mode)
+        {
+            Package? package = packageData(data);
+            byte[] tempKey = loadTempKey();
+            package = encryptData(package, tempKey/*client.sessionKey*/, mode); //TODO: remove
+            client.sWriter.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(package));
+            client.sWriter.Flush();
+            Console.Write("> Sent!");
+        }
+
+        public Package packageData(string data)
+        {
+            Dictionary<string, object> dictionary = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
+            Package package = new(dictionary["encryption"].ToString(), dictionary["type"].ToString());
+            package.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(dictionary["body"].ToString());
+            return package;
+        }
+
+        public Package encryptData(Package data, byte[] key, string mode)
+        {
+            string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data.body);
+            data.body.Clear();
+            data.body["encrypted"] = Coder.encode(temp, key, mode);
+            return data;
+        }
+        #endregion
     }
 }
