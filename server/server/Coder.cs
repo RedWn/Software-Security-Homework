@@ -16,12 +16,29 @@ public static class Coder
 
         switch(mode){
             case Mode.AESsecretKey:
-            return AES(plainBytes, key);
+            return AESencode(plainBytes, key);
             default:
                 return "";
         }
     }
-    public static string AES(byte[] plainBytes, byte[] keyBytes) {
+
+    public static string decode(string data, byte[] key, Mode mode)
+    {
+        if (data == null || data.Length <= 0)
+            throw new ArgumentNullException("plainText");
+
+        byte[] cipherBytes = Convert.FromBase64String(data); ;
+
+        switch (mode)
+        {
+            case Mode.AESsecretKey:
+                return AESdecode(cipherBytes, key);
+            default:
+                return "";
+        }
+    }
+
+    public static string AESencode(byte[] plainBytes, byte[] keyBytes) {
         using (Aes aes = Aes.Create())
         {
             aes.Key = keyBytes;
@@ -51,6 +68,39 @@ public static class Coder
         }
     }
 
+    public static string AESdecode(byte[] cipherBytes, byte[] keyBytes) {
+        // Declare the string used to hold the decrypted text
+        string plainText = null;
+
+        // Create an Aes object with the specified key
+        using (Aes aesAlg = Aes.Create())
+        {
+            aesAlg.Key = keyBytes;
+
+            // Get the initialization vector from the encrypted data
+            aesAlg.IV = new byte[aesAlg.BlockSize / 8];
+            Array.Copy(cipherBytes, 0, aesAlg.IV, 0, aesAlg.IV.Length);
+
+            // Create a decryptor to perform the stream transform
+            ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+
+            // Create the streams used for decryption
+            using (MemoryStream msDecrypt = new MemoryStream(cipherBytes, aesAlg.IV.Length, cipherBytes.Length - aesAlg.IV.Length))
+            {
+                using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                {
+                    using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                    {
+                        // Read the decrypted bytes from the stream and place them in a string
+                        plainText = srDecrypt.ReadToEnd();
+                    }
+                }
+            }
+        }
+
+        // Return the decrypted string
+        return plainText;
+    }
     public static byte[] getSessionKey() {
         using (Aes aes = Aes.Create()) {
             aes.GenerateKey();
