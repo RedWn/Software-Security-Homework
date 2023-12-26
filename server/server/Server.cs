@@ -6,6 +6,8 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Formats.Asn1;
+using Newtonsoft.Json;
+using Safester.CryptoLibrary.Api;
 
 namespace server
 {
@@ -59,10 +61,12 @@ namespace server
         #region RECEIVE
         public async void receiveMessage(Clientte client) {
             string data = client.sReader.ReadLine();
+            client.user = JsonConvert.DeserializeObject<User>(data);
+            
             Logger.Log(LogType.warning, "message received");
             Logger.WriteLogs();
-
-            Package message = packageMessage(data);
+            Console.WriteLine(data);
+            Package message = packageMessage(client.user.Message);
 
             byte[] tempKey = loadTempKey();
             message = decryptMessage(message, tempKey/*client.sessionKey*/, message.encryption); //still under construction
@@ -91,7 +95,7 @@ namespace server
 
         public byte[] loadTempKey()
         {
-            return File.ReadAllBytes("D:\\Prog\\ISSHW\\cleints\\cleints\\key.txt");
+            return File.ReadAllBytes("key.txt");
         }
         #endregion
 
