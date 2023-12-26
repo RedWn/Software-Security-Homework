@@ -6,23 +6,27 @@ using System.Text;
 
 public static class Coder
 {
-    public enum Mode { AESsecretKey, }
-
-    public static string encode(string data, byte[] key, Mode mode) {
+    public static string encode(string data, byte[] key, string mode)
+    {
         if (data == null || data.Length <= 0)
             throw new ArgumentNullException("plainText");
 
         byte[] plainBytes = Encoding.UTF8.GetBytes(data);
 
-        switch(mode){
-            case Mode.AESsecretKey:
-            return AESencode(plainBytes, key);
+        switch (mode)
+        {
+            case "NA":
+                return data;
+            case "AES":
+                return AESencode(plainBytes, key);
+            /*case "PGP":
+                return PGPencode(plainBytes, key);*/
             default:
                 return "";
         }
     }
 
-    public static string decode(string data, byte[] key, Mode mode)
+    public static string decode(string data, byte[] key, string mode)
     {
         if (data == null || data.Length <= 0)
             throw new ArgumentNullException("plainText");
@@ -31,14 +35,19 @@ public static class Coder
 
         switch (mode)
         {
-            case Mode.AESsecretKey:
+            case "NA":
+                return data;
+            case "AES":
                 return AESdecode(cipherBytes, key);
+            /*case "PGP":
+                return PGPdecode(cipherBytes, key);*/
             default:
                 return "";
         }
     }
 
-    public static string AESencode(byte[] plainBytes, byte[] keyBytes) {
+    public static string AESencode(byte[] plainBytes, byte[] keyBytes)
+    {
         using (Aes aes = Aes.Create())
         {
             aes.Key = keyBytes;
@@ -68,7 +77,8 @@ public static class Coder
         }
     }
 
-    public static string AESdecode(byte[] cipherBytes, byte[] keyBytes) {
+    public static string AESdecode(byte[] cipherBytes, byte[] keyBytes)
+    {
         // Declare the string used to hold the decrypted text
         string plainText = null;
 
@@ -102,8 +112,10 @@ public static class Coder
         // Return the decrypted string
         return plainText;
     }
-    public static byte[] getSessionKey() {
-        using (Aes aes = Aes.Create()) {
+    public static byte[] getSessionKey()
+    {
+        using (Aes aes = Aes.Create())
+        {
             aes.GenerateKey();
             return aes.Key;
         }
