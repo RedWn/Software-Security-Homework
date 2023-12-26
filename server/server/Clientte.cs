@@ -23,5 +23,25 @@ namespace server
             sWriter = new StreamWriter(client.GetStream(), Encoding.ASCII);
             sReader = new StreamReader(client.GetStream(), Encoding.ASCII);
         }
+
+        public Package decryptMessage(Package data, string mode)
+        {
+            string temp = new(data.body["encrypted"]);
+            data.body.Clear();
+            string decodedBody = Coder.decode(temp, sessionKey, mode);
+            data.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedBody);
+            Logger.Log(LogType.info2, "decryption complete!");
+            Logger.Log(LogType.info2, Newtonsoft.Json.JsonConvert.SerializeObject(data));
+            Logger.WriteLogs();
+            return data;
+        }
+
+        public Package encryptData(Package data, string mode)
+        {
+            string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data.body);
+            data.body.Clear();
+            data.body["encrypted"] = Coder.encode(temp, sessionKey, mode);
+            return data;
+        }
     }
 }
