@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using Org.BouncyCastle.Bcpg.OpenPgp;
 
 namespace server
 {
@@ -15,6 +16,7 @@ namespace server
         public StreamWriter sWriter;
         public StreamReader sReader;
         public byte[] sessionKey;
+        public PgpPublicKey publicKey;
 
         public Clientte(object obj)
         {

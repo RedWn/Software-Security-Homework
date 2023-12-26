@@ -6,7 +6,7 @@ using System.Text;
 
 public static class Coder
 {
-    public static string encode(string data, byte[] key, string mode)
+    public static string encode(string data, byte[] AESKey, string mode)
     {
         if (data == null || data.Length <= 0)
             throw new ArgumentNullException("plainText");
@@ -21,7 +21,7 @@ public static class Coder
             case "NA":
                 return data;
             case "AES":
-                return AESencode(plainBytes, key);
+                return AESencode(plainBytes, AESKey);
             /*case "PGP":
                 return PGPencode(plainBytes, key);*/
             default:
@@ -29,7 +29,7 @@ public static class Coder
         }
     }
 
-    public static string decode(string data, byte[] key, string mode)
+    public static string decode(string data, byte[] AESKey, string mode)
     {
         if (data == null || data.Length <= 0)
             throw new ArgumentNullException("plainText");
@@ -44,7 +44,7 @@ public static class Coder
             case "NA":
                 return data;
             case "AES":
-                return AESdecode(cipherBytes, key);
+                return AESdecode(cipherBytes, AESKey);
             /*case "PGP":
                 return PGPdecode(cipherBytes, key);*/
             default:

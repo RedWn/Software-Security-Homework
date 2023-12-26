@@ -68,7 +68,7 @@ namespace server
             {
                 case "handshake":
                     message = client.decryptMessage(message, message.encryption);
-                    client.sessionKey = Convert.FromBase64String(message.body["publicKey"]);
+                    //client.publicKey = Convert.FromBase64String(message.body["publicKey"]);
                     sendMessage(client, "{\"encryption\":\"NA\",\"type\":\"handshake\",\"body\":{\"publicKey\": \"key set\"}}");
                     break;
                 case "sessionKey":
