@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "client", "cleints\client.cs
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "server", "..\server\server\server.csproj", "{15E35A07-14D8-444B-9FFB-05349A723A64}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "common", "Common\common.shproj", "{F0BF53D8-757B-49BA-B932-48709AAFE84A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,5 +29,10 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AEA887E9-EB36-4E1C-9126-5BEB8171C7E4}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Common\Common.projitems*{15e35a07-14d8-444b-9ffb-05349a723a64}*SharedItemsImports = 5
+		Common\Common.projitems*{4c2ed7d6-1a76-446c-be31-15145896465d}*SharedItemsImports = 5
+		Common\Common.projitems*{f0bf53d8-757b-49ba-b932-48709aafe84a}*SharedItemsImports = 13
 	EndGlobalSection
 EndGlobal
