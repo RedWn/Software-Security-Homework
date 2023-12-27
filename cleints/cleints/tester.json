@@ -1,6 +1,6 @@
 ﻿{
-    "encryption": "NA",
-    "type": "login",
+    "encryption": "AES",
+    "type": "generic",
     "body": {
         "email": "testest",
         "password": 123456
