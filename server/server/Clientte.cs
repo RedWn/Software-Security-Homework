@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -12,7 +11,6 @@ namespace server
     internal class Clientte
     {
         public TcpClient client;
-        public User user;
         public IPEndPoint IPEndPoint;
         public StreamWriter sWriter;
         public StreamReader sReader;
@@ -25,20 +23,5 @@ namespace server
             sWriter = new StreamWriter(client.GetStream(), Encoding.ASCII);
             sReader = new StreamReader(client.GetStream(), Encoding.ASCII);
         }
-    }
-
-    class User
-    {
-        public string Name { get; set; } // Name  
-        public string Password { get; set; } // Password  
-        public string Message { get; set; } // Some message text  
-
-        internal String ToJSON()
-        {
-            String outPut = JsonConvert.SerializeObject(this);
-            Console.WriteLine(outPut);
-            return outPut;
-        }
-
     }
 }
