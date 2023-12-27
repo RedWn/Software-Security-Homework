@@ -3,10 +3,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using Org.BouncyCastle.Bcpg.OpenPgp;
+using Safester.CryptoLibrary.Api;
+using server;
 
-public static class Coder
+public class Coder
 {
-    public static string encode(string data, byte[] AESKey, string mode)
+    public static string encode(string data, string mode, ClientKeys keys)
     {
         if (data == null || data.Length <= 0)
             throw new ArgumentNullException("plainText");
@@ -14,22 +17,22 @@ public static class Coder
         {
             return data;
         }
-        byte[] plainBytes = Encoding.UTF8.GetBytes(data);
 
         switch (mode)
         {
             case "NA":
                 return data;
             case "AES":
-                return AESencode(plainBytes, AESKey);
-            /*case "PGP":
-                return PGPencode(plainBytes, key);*/
+                byte[] plainBytes = Encoding.UTF8.GetBytes(data);
+                return AESencode(plainBytes, keys.sessionKey);
+            case "PGP":
+                return PGPencode(data, keys.targetPublicKeyRing);
             default:
                 return "";
         }
     }
 
-    public static string decode(string data, byte[] AESKey, string mode)
+    public static string decode(string data, string mode, ClientKeys keys)
     {
         if (data == null || data.Length <= 0)
             throw new ArgumentNullException("plainText");
@@ -37,26 +40,26 @@ public static class Coder
         {
             return data;
         }
-        byte[] cipherBytes = Convert.FromBase64String(data); ;
 
         switch (mode)
         {
             case "NA":
                 return data;
             case "AES":
-                return AESdecode(cipherBytes, AESKey);
-            /*case "PGP":
-                return PGPdecode(cipherBytes, key);*/
+                byte[] cipherBytes = Convert.FromBase64String(data);
+                return AESdecode(cipherBytes, keys.sessionKey);
+            case "PGP":
+                return PGPdecode(data, keys.PGPKeys.PrivateKeyRing, keys.passphrase);
             default:
                 return "";
         }
     }
 
-    public static string AESencode(byte[] plainBytes, byte[] keyBytes)
+    public static string AESencode(byte[] plainBytes, byte[] key)
     {
         using (Aes aes = Aes.Create())
         {
-            aes.Key = keyBytes;
+            aes.Key = key;
             aes.GenerateIV();
 
             // Create an encryptor to perform the stream transform
@@ -83,15 +86,15 @@ public static class Coder
         }
     }
 
-    public static string AESdecode(byte[] cipherBytes, byte[] keyBytes)
+    public static string AESdecode(byte[] cipherBytes, byte[] key)
     {
         // Declare the string used to hold the decrypted text
-        string plainText = null;
+        string plainText = "";
 
         // Create an Aes object with the specified key
         using (Aes aes = Aes.Create())
         {
-            aes.Key = keyBytes;
+            aes.Key = key;
 
             // Get the initialization vector from the encrypted data
             byte[] temp = new byte[aes.BlockSize / 8];
@@ -118,6 +121,26 @@ public static class Coder
         // Return the decrypted string
         return plainText;
     }
+
+    public static string PGPencode(string plainData, string publicKeyRing)
+    {
+        Encryptor encryptor = new Encryptor();
+        List<PgpPublicKey> keys = new List<PgpPublicKey>();
+        keys.Add(PgpPublicKeyGetter.ReadPublicKey(publicKeyRing));
+        string outText = encryptor.Encrypt(keys, plainData);
+        Console.WriteLine("Encryption done.");
+        return outText;
+    }
+
+    public static string PGPdecode(string cipherData, string privateKeyRing, string passphrase)
+    {
+        Decryptor decryptor = new Decryptor(privateKeyRing, passphrase.ToArray());
+        string decryptedText = decryptor.Decrypt(cipherData);
+        Console.WriteLine("Decryption integrity check status: " + decryptor.Verify);
+        Console.WriteLine(decryptedText);
+        return decryptedText;
+    }
+
     public static byte[] getSessionKey()
     {
         using (Aes aes = Aes.Create())
