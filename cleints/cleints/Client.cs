@@ -1,13 +1,5 @@
-﻿using Newtonsoft.Json;
-using Safester.CryptoLibrary.Api;
-using server;
-using System;
-using System.Collections.Generic;
-using System.Formats.Asn1;
-using System.Linq;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Cleints
 {
@@ -17,13 +9,13 @@ namespace Cleints
         private StreamReader _sReader;
         private StreamWriter _sWriter;
         private User _user;
- 
+
 
         private byte[] _sessionKey;
 
         private Boolean _isConnected;
 
-        public Client(String ipAddress, int portNum,User user)
+        public Client(String ipAddress, int portNum, User user)
         {
             _client = new TcpClient();
             _client.Connect(ipAddress, portNum);
@@ -31,7 +23,8 @@ namespace Cleints
             try
             {
                 HandleCommunication();
-            }catch (Exception)
+            }
+            catch (Exception)
             {
                 _isConnected = false;
                 _client.Close();
@@ -52,13 +45,13 @@ namespace Cleints
 
                 string sData = _user.ToJSON();
                 Console.WriteLine(sData);
-/*
-                Logger.Log(LogType.info1, "Press Enter to send file data");
-                Logger.WriteLogs();
-                Console.ReadLine();
-                string sData = File.ReadAllText("tester.txt");*/
+                /*
+                                Logger.Log(LogType.info1, "Press Enter to send file data");
+                                Logger.WriteLogs();
+                                Console.ReadLine();
+                                string sData = File.ReadAllText("tester.txt");*/
 
-                string context="";
+                string context = "";
                 //the context should signify why is the message being sent
                 sendMessage(sData, context);
                 receiveMessage();
@@ -106,7 +99,8 @@ namespace Cleints
         #endregion
 
         #region SEND
-        public void sendMessage(string data, string context) {
+        public void sendMessage(string data, string context)
+        {
             Console.WriteLine(data);
             Package? package = packageData(data);
             Console.WriteLine(package.ToString);
@@ -117,14 +111,16 @@ namespace Cleints
             Console.Write("> Sent!");
         }
 
-        public Package packageData(string data) {
+        public Package packageData(string data)
+        {
             Dictionary<string, object> dictionary = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
             Package package = new(dictionary["encryption"].ToString(), dictionary["type"].ToString());
             package.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(dictionary["body"].ToString());
             return package;
         }
 
-        public Package encryptData(Package data, string mode) {
+        public Package encryptData(Package data, string mode)
+        {
             string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data.body);
             data.body.Clear();
             _sessionKey = File.ReadAllBytes("key.txt"); //TODO: remove this
@@ -133,23 +129,8 @@ namespace Cleints
         }
         #endregion
 
-     
-       
-    }
-   
-}
 
-class User
-{
-    public string Name { get; set; } // Name  
-    public string Password { get; set; } // Password
-    public string Message { get; set; } // Some message text  
 
-    internal String ToJSON()
-    {
-        String outPut = JsonConvert.SerializeObject(this);
-        Console.WriteLine(outPut);
-        return outPut;
     }
 
 }

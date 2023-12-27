@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Net;
 using System.Net.Sockets;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using System.Formats.Asn1;
-using Newtonsoft.Json;
-using Safester.CryptoLibrary.Api;
 
 namespace server
 {
@@ -33,7 +25,7 @@ namespace server
         {
             while (_isRunning)
             {
-               Logger.Log(LogType.info2,"Waiting for a connection...");
+                Logger.Log(LogType.info2, "Waiting for a connection...");
                 Logger.WriteLogs();
                 TcpClient newClient = _server.AcceptTcpClient();
                 Console.WriteLine("Connected!");
@@ -51,7 +43,8 @@ namespace server
                 try
                 {
                     receiveMessage(client);
-                }catch (Exception)
+                }
+                catch (Exception)
                 {
                     client.client.Close();
                 }
@@ -59,10 +52,11 @@ namespace server
         }
 
         #region RECEIVE
-        public async void receiveMessage(Clientte client) {
+        public async void receiveMessage(Clientte client)
+        {
             string data = client.sReader.ReadLine();
             client.user = JsonConvert.DeserializeObject<User>(data);
-            
+
             Logger.Log(LogType.warning, "message received");
             Logger.WriteLogs();
             Console.WriteLine(data);
@@ -73,7 +67,7 @@ namespace server
             Logger.Log(LogType.info2, "decryption complete!");
             Logger.Log(LogType.info2, Newtonsoft.Json.JsonConvert.SerializeObject(message));
             Logger.WriteLogs();
-            sendMessage(client, "{\"encryption\":\"AES\",\"type\":\"ACK\",\"body\":{\"message\": \"received\"}}", "","AES"); //test only
+            sendMessage(client, "{\"encryption\":\"AES\",\"type\":\"ACK\",\"body\":{\"message\": \"received\"}}", "", "AES"); //test only
         }
 
         public Package packageMessage(string data)
@@ -84,7 +78,8 @@ namespace server
             return package;
         }
 
-        public Package decryptMessage(Package data, byte[] key, string mode) {
+        public Package decryptMessage(Package data, byte[] key, string mode)
+        {
             //string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data.body);
             string temp = new(data.body["encrypted"]);
             data.body.Clear();
