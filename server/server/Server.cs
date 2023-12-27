@@ -6,6 +6,9 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Formats.Asn1;
+using Safester.CryptoLibrary.Api;
+using System.Security.Principal;
+using System.Security.Cryptography.X509Certificates;
 
 namespace server
 {
@@ -14,6 +17,8 @@ namespace server
         private TcpListener _server;
         private Boolean _isRunning;
         private List<Clientte> clients;
+        private PgpKeyPairHolder _PGPKeys;
+        private string _passphrase;
 
         public TcpServer(string ip, int port)
         {
@@ -24,6 +29,10 @@ namespace server
 
             _isRunning = true;
 
+            string _identity = "server";
+            _passphrase = RandomString(8);
+            PgpKeyPairGenerator generator = new(_identity, _passphrase.ToArray(), PublicKeyAlgorithm.RSA, PublicKeyLength.BITS_2048);
+            _PGPKeys = generator.Generate();
             LoopClients();
         }
 
@@ -43,6 +52,8 @@ namespace server
         public void HandleClient(object obj)
         {
             Clientte client = new(obj);
+            client.keys.PGPKeys = _PGPKeys;
+            client.keys.passphrase = _passphrase;
             clients.Add(client);
             while (client.client.Connected)
             {
@@ -68,17 +79,23 @@ namespace server
             {
                 case "handshake":
                     message = client.decryptMessage(message, message.encryption);
-                    //client.publicKey = Convert.FromBase64String(message.body["publicKey"]);
-                    sendMessage(client, "{\"encryption\":\"NA\",\"type\":\"handshake\",\"body\":{\"publicKey\": \"key set\"}}");
+                    client.keys.targetPublicKeyRing = message.body["publicKey"];
+                    Dictionary<string, string> body = new Dictionary<string, string>();
+                    body["publicKey"] = _PGPKeys.PublicKeyRing;
+                    sendMessage(client, messageBuilder("NA", "handshake", body));
                     break;
                 case "sessionKey":
                     message = client.decryptMessage(message, message.encryption);
-                    client.sessionKey = Convert.FromBase64String(message.body["key"]);
-                    sendMessage(client, "{\"encryption\":\"NA\",\"type\":\"generic\",\"body\":{\"message\": \"key set\"}}");
+                    client.keys.sessionKey = Convert.FromBase64String(message.body["key"]);
+                    body = new Dictionary<string, string>();
+                    body["message"] = "Session key set!";
+                    sendMessage(client, messageBuilder("NA", "generic", body));
                     break;
                 case "generic":
                     message = client.decryptMessage(message, message.encryption);
-                    sendMessage(client, "{\"encryption\":\"NA\",\"type\":\"generic\",\"body\":{\"message\": \"received\"}}");
+                    body = new Dictionary<string, string>();
+                    body["message"] = "received!";
+                    sendMessage(client, messageBuilder("NA", "generic", body));
                     break;
             }
         }
@@ -98,6 +115,21 @@ namespace server
             Package package = new(dictionary["encryption"].ToString(), dictionary["type"].ToString());
             package.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(dictionary["body"].ToString());
             return package;
+        }
+
+        public static string RandomString(int length)
+        {
+            Random random = new Random();
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        public string messageBuilder(string encryption, string type, Dictionary<string, string> body)
+        {
+            Package p = new(encryption, type);
+            p.body = body;
+            return Newtonsoft.Json.JsonConvert.SerializeObject(p);
         }
     }
 }

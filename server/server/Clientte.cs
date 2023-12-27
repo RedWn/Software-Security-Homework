@@ -6,17 +6,24 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using Org.BouncyCastle.Bcpg.OpenPgp;
+using Safester.CryptoLibrary.Api;
 
 namespace server
 {
+    public class ClientKeys
+    {
+        public byte[] sessionKey;
+        public PgpKeyPairHolder PGPKeys;
+        public string passphrase;
+        public string targetPublicKeyRing;
+    }
     internal class Clientte
     {
         public TcpClient client;
         public IPEndPoint IPEndPoint;
         public StreamWriter sWriter;
         public StreamReader sReader;
-        public byte[] sessionKey;
-        public PgpPublicKey publicKey;
+        public ClientKeys keys;
 
         public Clientte(object obj)
         {
@@ -24,13 +31,14 @@ namespace server
             IPEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
             sWriter = new StreamWriter(client.GetStream(), Encoding.ASCII);
             sReader = new StreamReader(client.GetStream(), Encoding.ASCII);
+            keys = new ClientKeys();
         }
 
         public Package decryptMessage(Package data, string mode)
         {
             string temp = new(data.body["encrypted"]);
             data.body.Clear();
-            string decodedBody = Coder.decode(temp, sessionKey, mode);
+            string decodedBody = Coder.decode(temp, mode, keys);
             data.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedBody);
             Logger.Log(LogType.info2, "decryption complete!");
             Logger.Log(LogType.info2, Newtonsoft.Json.JsonConvert.SerializeObject(data));
@@ -42,7 +50,7 @@ namespace server
         {
             string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data.body);
             data.body.Clear();
-            data.body["encrypted"] = Coder.encode(temp, sessionKey, mode);
+            data.body["encrypted"] = Coder.encode(temp, mode, keys);
             return data;
         }
     }
