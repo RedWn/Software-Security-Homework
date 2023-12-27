@@ -1,4 +1,7 @@
-﻿using System.Net;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
@@ -7,7 +10,6 @@ namespace server
     internal class Clientte
     {
         public TcpClient client;
-        public User user;
         public IPEndPoint IPEndPoint;
         public StreamWriter sWriter;
         public StreamReader sReader;

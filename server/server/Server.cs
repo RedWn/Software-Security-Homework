@@ -1,5 +1,8 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading.Tasks;
+using System.Formats.Asn1;
 
 namespace server
 {
@@ -55,12 +58,10 @@ namespace server
         public async void receiveMessage(Clientte client)
         {
             string data = client.sReader.ReadLine();
-            client.user = JsonConvert.DeserializeObject<User>(data);
-
             Logger.Log(LogType.warning, "message received");
             Logger.WriteLogs();
-            Console.WriteLine(data);
-            Package message = packageMessage(client.user.Message);
+
+            Package message = packageMessage(data);
 
             byte[] tempKey = loadTempKey();
             message = decryptMessage(message, tempKey/*client.sessionKey*/, message.encryption); //still under construction
@@ -90,7 +91,7 @@ namespace server
 
         public byte[] loadTempKey()
         {
-            return File.ReadAllBytes("key.txt");
+            return File.ReadAllBytes("D:\\Prog\\ISSHW\\cleints\\cleints\\key.txt");
         }
         #endregion
 

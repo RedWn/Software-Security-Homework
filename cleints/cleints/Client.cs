@@ -1,4 +1,9 @@
-﻿using System.Net.Sockets;
+﻿using server;
+using System;
+using System.Collections.Generic;
+using System.Formats.Asn1;
+using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 
 namespace Cleints
@@ -8,18 +13,14 @@ namespace Cleints
         private TcpClient _client;
         private StreamReader _sReader;
         private StreamWriter _sWriter;
-        private User _user;
-
-
         private byte[] _sessionKey;
 
         private Boolean _isConnected;
 
-        public Client(String ipAddress, int portNum, User user)
+        public Client(String ipAddress, int portNum)
         {
             _client = new TcpClient();
             _client.Connect(ipAddress, portNum);
-            _user = user;
             try
             {
                 HandleCommunication();
@@ -37,21 +38,13 @@ namespace Cleints
             _sessionKey = Coder.getSessionKey();
             _isConnected = true;
             while (_isConnected)
-            {
-
-                Logger.Log(LogType.info1, "Enter Youre Message, please  ");
+            {      
+                Logger.Log(LogType.info1, "Press Enter to send file data");
                 Logger.WriteLogs();
-                _user.Message = Console.ReadLine();
-
-                string sData = _user.ToJSON();
-                Console.WriteLine(sData);
-                /*
-                                Logger.Log(LogType.info1, "Press Enter to send file data");
-                                Logger.WriteLogs();
-                                Console.ReadLine();
-                                string sData = File.ReadAllText("tester.txt");*/
-
-                string context = "";
+                Console.ReadLine();
+                string projectDir = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
+                string sData = File.ReadAllText(projectDir + "\\tester.txt");
+                string context="";
                 //the context should signify why is the message being sent
                 sendMessage(sData, context);
                 receiveMessage();
@@ -94,16 +87,13 @@ namespace Cleints
 
         public byte[] loadTempKey()
         {
-            return File.ReadAllBytes("key.txt");
+            return File.ReadAllBytes("D:\\Prog\\ISSHW\\cleints\\cleints\\key.txt");
         }
         #endregion
 
         #region SEND
-        public void sendMessage(string data, string context)
-        {
-            Console.WriteLine(data);
+        public void sendMessage(string data, string context) {
             Package? package = packageData(data);
-            Console.WriteLine(package.ToString);
             package = encryptData(package, package.encryption);
             _sWriter = new StreamWriter(_client.GetStream(), Encoding.ASCII);
             _sWriter.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(package));
@@ -123,14 +113,10 @@ namespace Cleints
         {
             string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data.body);
             data.body.Clear();
-            _sessionKey = File.ReadAllBytes("key.txt"); //TODO: remove this
+            _sessionKey = File.ReadAllBytes("D:\\Prog\\ISSHW\\cleints\\cleints\\key.txt"); //TODO: remove this
             data.body["encrypted"] = Coder.encode(temp, _sessionKey, mode);
             return data;
         }
-        #endregion
-
-
-
+#endregion
     }
-
 }
