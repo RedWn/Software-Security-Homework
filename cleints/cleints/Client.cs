@@ -64,6 +64,7 @@ namespace Cleints
             body = new Dictionary<string, string>();
             body["key"] = sessionKey;
             sendMessage(messageBuilder("PGP", "sessionKey", body));
+            receiveMessage();
         }
 
         public void HandleCommunication()
@@ -75,7 +76,6 @@ namespace Cleints
                 Logger.Log(LogType.info1, "Type the message and press Enter to send file data");
                 Logger.WriteLogs();
                 string sData = ReadMultipleLines();
-                //the context should signify why is the message being sent
                 sendMessage(sData);
                 receiveMessage();
             }
@@ -129,7 +129,7 @@ namespace Cleints
             _sWriter = new StreamWriter(_client.GetStream(), Encoding.ASCII);
             _sWriter.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(package));
             _sWriter.Flush();
-            Console.Write("> Sent!");
+            Console.WriteLine("> Sent!");
         }
 
         public Package packageMessage(string data)
@@ -144,7 +144,7 @@ namespace Cleints
         {
             StringBuilder sb = new StringBuilder();
             string line;
-            while ((line = Console.ReadLine()) != "")
+            while ((line = Console.ReadLine()) != "END")
             {
                 sb.AppendLine(line);
             }

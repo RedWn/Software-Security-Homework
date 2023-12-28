@@ -89,7 +89,7 @@ namespace server
                     client.keys.sessionKey = Convert.FromBase64String(message.body["key"]);
                     body = new Dictionary<string, string>();
                     body["message"] = "Session key set!";
-                    sendMessage(client, messageBuilder("NA", "generic", body));
+                    sendMessage(client, messageBuilder("AES", "generic", body));
                     break;
                 case "generic":
                     message = client.decryptMessage(message, message.encryption);
@@ -106,7 +106,7 @@ namespace server
             package = client.encryptData(package, package.encryption);
             client.sWriter.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(package));
             client.sWriter.Flush();
-            Console.Write("> Sent!");
+            Console.WriteLine("> Sent!");
         }
 
         public Package packageMessage(string data)

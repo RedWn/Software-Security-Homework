@@ -1,8 +1,9 @@
 ﻿{
-    "encryption": "AES",
-    "type": "generic",
-    "body": {
-        "email": "testest",
-        "password": 123456
-    }
+  "encryption": "AES",
+  "type": "generic",
+  "body": {
+    "email": "testest",
+    "password": 123456
+  }
 }
+END
