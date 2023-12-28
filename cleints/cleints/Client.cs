@@ -69,7 +69,6 @@ namespace Cleints
 
         public void HandleCommunication()
         {
-            keys.sessionKey = Coder.getSessionKey();
             _isConnected = true;
             while (_isConnected)
             {
