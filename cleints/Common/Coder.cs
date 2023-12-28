@@ -3,10 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using Cleints;
 using Org.BouncyCastle.Bcpg.OpenPgp;
 using Safester.CryptoLibrary.Api;
-using server;
 
 public class Coder
 {
@@ -150,4 +148,12 @@ public class Coder
             return aes.Key;
         }
     }
+}
+
+public class ClientKeys
+{
+    public byte[] sessionKey;
+    public PgpKeyPairHolder PGPKeys;
+    public string passphrase;
+    public string targetPublicKeyRing;
 }
