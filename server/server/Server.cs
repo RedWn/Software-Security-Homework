@@ -88,7 +88,7 @@ namespace server
                     body["message"] = "Session key set!";
                     sendMessage(client, messageBuilder("AES", "generic", body));
                     break;
-                case
+                case "generic":
                     message = client.decryptMessage(message, message.encryption);
                     body = new Dictionary<string, string>();
                     body["message"] = "received!";
