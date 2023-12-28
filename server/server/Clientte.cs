@@ -13,7 +13,7 @@ namespace server
     internal class Clientte
     {
         public TcpClient client;
-        public IPEndPoint IPEndPoint;
+        public int port;
         public StreamWriter sWriter;
         public StreamReader sReader;
         public ClientKeys keys;
@@ -21,7 +21,8 @@ namespace server
         public Clientte(object obj)
         {
             client = (TcpClient)obj;
-            IPEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
+            IPEndPoint ipendpoint = client.Client.RemoteEndPoint as IPEndPoint;
+            port = ipendpoint.Port;
             sWriter = new StreamWriter(client.GetStream(), Encoding.ASCII);
             sReader = new StreamReader(client.GetStream(), Encoding.ASCII);
             keys = new ClientKeys();

@@ -68,7 +68,7 @@ namespace server
         public async void receiveMessage(Clientte client)
         {
             string data = client.sReader.ReadLine();
-            Logger.Log(LogType.warning, "message received");
+            Logger.Log(LogType.warning, client.port + " > message received");
             Logger.WriteLogs();
 
             Package message = packageMessage(data);
