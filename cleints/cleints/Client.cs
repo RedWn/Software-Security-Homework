@@ -1,6 +1,5 @@
 ﻿using Org.BouncyCastle.Bcpg.OpenPgp;
 using Safester.CryptoLibrary.Api;
-using server;
 using System;
 using System.Collections.Generic;
 using System.Formats.Asn1;
@@ -14,13 +13,6 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Cleints
 {
-    public class ClientKeys
-    {
-        public byte[] sessionKey;
-        public PgpKeyPairHolder PGPKeys;
-        public string passphrase;
-        public string targetPublicKeyRing;
-    }
     class Client
     {
         private TcpClient _client;

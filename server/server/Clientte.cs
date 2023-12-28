@@ -10,13 +10,6 @@ using Safester.CryptoLibrary.Api;
 
 namespace server
 {
-    public class ClientKeys
-    {
-        public byte[] sessionKey;
-        public PgpKeyPairHolder PGPKeys;
-        public string passphrase;
-        public string targetPublicKeyRing;
-    }
     internal class Clientte
     {
         public TcpClient client;
