@@ -10,7 +10,7 @@ using Safester.CryptoLibrary.Api;
 
 namespace server
 {
-    internal class Clientte
+    internal class Client
     {
         public TcpClient client;
         public int port;
@@ -18,7 +18,7 @@ namespace server
         public StreamReader sReader;
         public ClientKeys keys;
 
-        public Clientte(object obj)
+        public Client(object obj)
         {
             client = (TcpClient)obj;
             IPEndPoint ipendpoint = client.Client.RemoteEndPoint as IPEndPoint;

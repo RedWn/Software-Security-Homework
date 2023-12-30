@@ -1,57 +1,57 @@
-﻿using System.Net;
+﻿using Safester.CryptoLibrary.Api;
+using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
-using System.Formats.Asn1;
-using Safester.CryptoLibrary.Api;
-using System.Security.Principal;
-using System.Security.Cryptography.X509Certificates;
 
 namespace server
 {
     class TcpServer
     {
-        private TcpListener _server;
-        private Boolean _isRunning;
-        private List<Clientte> clients;
-        private PgpKeyPairHolder _PGPKeys;
+        private bool _isRunning;
         private string _passphrase;
+
+        private TcpListener _server;
+        private List<Client> clients;
+        private PgpKeyPairHolder _PGPKeys;
 
         public TcpServer(string ip, int port)
         {
-            clients = new List<Clientte>();
-            IPAddress localAddr = IPAddress.Parse(ip);
-            _server = new TcpListener(localAddr, port);
+            clients = new List<Client>();
+            _passphrase = RandomString(8);
+
+            _server = new TcpListener(IPAddress.Parse(ip), port);
             _server.Start();
 
             _isRunning = true;
 
             string _identity = "server";
-            _passphrase = RandomString(8);
+
             PgpKeyPairGenerator generator = new(_identity, _passphrase.ToArray(), PublicKeyAlgorithm.RSA, PublicKeyLength.BITS_2048);
             _PGPKeys = generator.Generate();
-            LoopClients();
         }
 
-        public void LoopClients()
+        public void AcceptConnections()
         {
             while (_isRunning)
             {
                 Logger.Log(LogType.info2, "Waiting for a connection...");
                 Logger.WriteLogs();
+
                 TcpClient newClient = _server.AcceptTcpClient();
                 Console.WriteLine("Connected!");
-                Thread t = new(new ParameterizedThreadStart(HandleClient));
+                Thread t = new(new ParameterizedThreadStart(HandleClientConnection));
                 t.Start(newClient);
             }
         }
 
-        public void HandleClient(object obj)
+        public void HandleClientConnection(object obj)
         {
-            Clientte client = new(obj);
+            Client client = new(obj);
+
             client.keys.PGPKeys = _PGPKeys;
             client.keys.passphrase = _passphrase;
+
             clients.Add(client);
+
             while (client.client.Connected)
             {
                 try
@@ -65,13 +65,14 @@ namespace server
             }
         }
 
-        public async void receiveMessage(Clientte client)
+        public async void receiveMessage(Client client)
         {
             string data = client.sReader.ReadLine();
             Logger.Log(LogType.warning, client.port + " > message received");
             Logger.WriteLogs();
 
             Package message = packageMessage(data);
+
             switch (message.type)
             {
                 case "handshake":
@@ -97,7 +98,7 @@ namespace server
             }
         }
 
-        public void sendMessage(Clientte client, string data)
+        public void sendMessage(Client client, string data)
         {
             Package? package = packageMessage(data);
             package = client.encryptData(package, package.encryption);
@@ -106,11 +107,17 @@ namespace server
             Console.WriteLine("> Sent!");
         }
 
-        public Package packageMessage(string data)
+        public Package packageMessage(string jsonData)
         {
-            Dictionary<string, object> dictionary = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
-            Package package = new(dictionary["encryption"].ToString(), dictionary["type"].ToString());
-            package.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(dictionary["body"].ToString());
+            var decodedData = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonData);
+            var decodedBody = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedData["body"].ToString());
+
+            string? encryption = decodedData["encryption"].ToString();
+            string? type = decodedData["type"].ToString();
+
+            Package package = new(encryption, type);
+            package.body = decodedBody;
+
             return package;
         }
 

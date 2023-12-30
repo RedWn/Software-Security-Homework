@@ -16,6 +16,7 @@ namespace Multi_Threaded_TCP
             int port = Int32.Parse(Console.ReadLine());
 
             TcpServer server = new TcpServer(ip, port);
+            server.AcceptConnections();
         }
     }
 }
