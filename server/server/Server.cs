@@ -9,22 +9,23 @@ namespace server
     {
         private bool _isRunning;
         private string _passphrase;
+        private string _identity;
 
         private TcpListener _server;
-        private List<Client> clients;
+        private List<Client> _clients;
         private PgpKeyPairHolder _PGPKeys;
 
         public TcpServer(string ip, int port)
         {
-            clients = new List<Client>();
-            _passphrase = getRandomString(8);
+            _clients = new List<Client>();
+
+            _passphrase = Utils.GetRandomString(8);
+            _identity = "server";
 
             _server = new TcpListener(IPAddress.Parse(ip), port);
             _server.Start();
 
             _isRunning = true;
-
-            string _identity = "server";
 
             PgpKeyPairGenerator generator = new(_identity, _passphrase.ToArray(), PublicKeyAlgorithm.RSA, PublicKeyLength.BITS_2048);
             _PGPKeys = generator.Generate();
@@ -52,7 +53,7 @@ namespace server
             client.keys.PGPKeys = _PGPKeys;
             client.keys.passphrase = _passphrase;
 
-            clients.Add(client);
+            _clients.Add(client);
 
             while (client.client.Connected)
             {
@@ -74,7 +75,7 @@ namespace server
 
             string data = client.sReader.ReadLine();
 
-            Package message = PackageClientData(data);
+            Package message = Package.FromClientData(data);
             message = client.DecryptPackageBody(message);
 
             switch (message.type)
@@ -107,32 +108,12 @@ namespace server
 
         public void sendMessage(Client client, string data)
         {
-            Package? package = PackageClientData(data);
+            var package = Package.FromClientData(data);
             package = client.EncryptPackageBody(package);
             client.sWriter.WriteLine(JsonConvert.SerializeObject(package));
             client.sWriter.Flush();
             Console.WriteLine("> Sent!");
         }
-
-        public Package PackageClientData(string jsonData)
-        {
-            var decodedData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonData);
-            var decodedBody = JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedData["body"].ToString());
-
-            string? encryption = decodedData["encryption"].ToString();
-            string? type = decodedData["type"].ToString();
-
-            return new Package(encryption, type, decodedBody);
-        }
-
-        private static string getRandomString(int length)
-        {
-            Random random = new Random();
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return new string(Enumerable.Repeat(chars, length)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
-        }
-
         private string serializePackage(string encryption, string type, Dictionary<string, string> body)
         {
             return JsonConvert.SerializeObject(new Package(encryption, type, body));

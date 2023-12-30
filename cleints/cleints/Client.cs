@@ -24,7 +24,7 @@ namespace Cleints
             _identity = "test1";
 
             keys = new ClientKeys();
-            keys.passphrase = getRandomString(8);
+            keys.passphrase = Utils.GetRandomString(8);
             PgpKeyPairGenerator generator = new(_identity, keys.passphrase.ToArray(), PublicKeyAlgorithm.RSA, PublicKeyLength.BITS_2048);
             keys.PGPKeys = generator.Generate();
 
@@ -97,7 +97,7 @@ namespace Cleints
             Logger.Log(LogType.warning, "message recieved");
             Logger.WriteLogs();
 
-            Package message = packageMessage(data);
+            Package message = Package.FromClientData(data);
             switch (message.type)
             {
                 case "handshake":
@@ -112,20 +112,12 @@ namespace Cleints
 
         public void sendMessage(string data)
         {
-            Package? package = packageMessage(data);
+            Package? package = Package.FromClientData(data);
             package = encryptData(package, package.encryption);
             _sWriter = new StreamWriter(_client.GetStream(), Encoding.ASCII);
             _sWriter.WriteLine(JsonConvert.SerializeObject(package));
             _sWriter.Flush();
             Console.WriteLine("> Sent!");
-        }
-
-        public Package packageMessage(string data)
-        {
-            Dictionary<string, object> dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
-            Package package = new(dictionary["encryption"].ToString(), dictionary["type"].ToString());
-            package.body = JsonConvert.DeserializeObject<Dictionary<string, string>>(dictionary["body"].ToString());
-            return package;
         }
 
         public static string ReadMultipleLines()
@@ -139,13 +131,6 @@ namespace Cleints
             return sb.ToString();
         }
 
-        private static string getRandomString(int length)
-        {
-            Random random = new Random();
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return new string(Enumerable.Repeat(chars, length)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
-        }
 
         private string getSerializedPackage(string encryption, string type, Dictionary<string, string> body)
         {
