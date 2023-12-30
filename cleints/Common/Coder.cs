@@ -1,10 +1,7 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
+﻿using Org.BouncyCastle.Bcpg.OpenPgp;
+using Safester.CryptoLibrary.Api;
 using System.Security.Cryptography;
 using System.Text;
-using Org.BouncyCastle.Bcpg.OpenPgp;
-using Safester.CryptoLibrary.Api;
 
 public class Coder
 {
@@ -152,8 +149,8 @@ public class Coder
 
 public class ClientKeys
 {
-    public byte[] sessionKey;
     public PgpKeyPairHolder PGPKeys;
+    public byte[] sessionKey;
     public string passphrase;
     public string targetPublicKeyRing;
 }

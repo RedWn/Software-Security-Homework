@@ -39,6 +39,7 @@ namespace server
 
                 TcpClient newClient = _server.AcceptTcpClient();
                 Console.WriteLine("Connected!");
+
                 Thread t = new(new ParameterizedThreadStart(HandleClientConnection));
                 t.Start(newClient);
             }
@@ -57,7 +58,7 @@ namespace server
             {
                 try
                 {
-                    receiveMessage(client);
+                    ReceiveClientMessage(client);
                 }
                 catch (Exception)
                 {
@@ -66,34 +67,39 @@ namespace server
             }
         }
 
-        public async void receiveMessage(Client client)
+        public async void ReceiveClientMessage(Client client)
         {
-            string data = client.sReader.ReadLine();
             Logger.Log(LogType.warning, client.port + " > message received");
             Logger.WriteLogs();
 
-            Package message = packageMessage(data);
+            string data = client.sReader.ReadLine();
+
+            Package message = PackageClientData(data);
+            message = client.DecryptPackageBody(message);
 
             switch (message.type)
             {
                 case "handshake":
-                    message = client.DecryptMessage(message, message.encryption);
                     client.keys.targetPublicKeyRing = message.body["publicKey"];
-                    Dictionary<string, string> body = new Dictionary<string, string>();
-                    body["publicKey"] = _PGPKeys.PublicKeyRing;
+                    var body = new Dictionary<string, string>
+                    {
+                        ["publicKey"] = _PGPKeys.PublicKeyRing
+                    };
                     sendMessage(client, serializePackage("NA", "handshake", body));
                     break;
                 case "sessionKey":
-                    message = client.DecryptMessage(message, message.encryption);
                     client.keys.sessionKey = Convert.FromBase64String(message.body["key"]);
-                    body = new Dictionary<string, string>();
-                    body["message"] = "Session key set!";
+                    body = new Dictionary<string, string>
+                    {
+                        ["message"] = "Session key set!"
+                    };
                     sendMessage(client, serializePackage("AES", "generic", body));
                     break;
                 case "generic":
-                    message = client.DecryptMessage(message, message.encryption);
-                    body = new Dictionary<string, string>();
-                    body["message"] = "received!";
+                    body = new Dictionary<string, string>
+                    {
+                        ["message"] = "received!"
+                    };
                     sendMessage(client, serializePackage("NA", "generic", body));
                     break;
             }
@@ -101,20 +107,20 @@ namespace server
 
         public void sendMessage(Client client, string data)
         {
-            Package? package = packageMessage(data);
-            package = client.encryptData(package, package.encryption);
+            Package? package = PackageClientData(data);
+            package = client.EncryptPackageBody(package);
             client.sWriter.WriteLine(JsonConvert.SerializeObject(package));
             client.sWriter.Flush();
             Console.WriteLine("> Sent!");
         }
 
-        public Package packageMessage(string jsonData)
+        public Package PackageClientData(string jsonData)
         {
-            var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonData);
-            var decodedBody = JsonConvert.DeserializeObject<Dictionary<string, string>>(data["body"].ToString());
+            var decodedData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonData);
+            var decodedBody = JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedData["body"].ToString());
 
-            string? encryption = data["encryption"].ToString();
-            string? type = data["type"].ToString();
+            string? encryption = decodedData["encryption"].ToString();
+            string? type = decodedData["type"].ToString();
 
             return new Package(encryption, type, decodedBody);
         }

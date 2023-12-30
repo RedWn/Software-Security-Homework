@@ -26,28 +26,28 @@ namespace server
             keys = new ClientKeys();
         }
 
-        public Package DecryptMessage(Package data, string mode)
+        public Package DecryptPackageBody(Package package)
         {
-            string decryptedBody = Coder.decode(data.body["encrypted"], mode, keys);
+            string decryptedBody = Coder.decode(package.body["encrypted"], package.encryption, keys);
 
-            data.body.Clear();
-            data.body = JsonConvert.DeserializeObject<Dictionary<string, string>>(decryptedBody);
+            package.body.Clear();
+            package.body = JsonConvert.DeserializeObject<Dictionary<string, string>>(decryptedBody);
 
             Logger.Log(LogType.info2, "decryption complete!");
-            Logger.Log(LogType.info2, JsonConvert.SerializeObject(data));
+            Logger.Log(LogType.info2, JsonConvert.SerializeObject(package));
             Logger.WriteLogs();
 
-            return data;
+            return package;
         }
 
-        public Package encryptData(Package data, string mode)
+        public Package EncryptPackageBody(Package package)
         {
-            string encodedData = Coder.encode(JsonConvert.SerializeObject(data.body), mode, keys);
+            string encodedData = Coder.encode(JsonConvert.SerializeObject(package.body), package.encryption, keys);
 
-            data.body.Clear();
-            data.body["encrypted"] = encodedData;
+            package.body.Clear();
+            package.body["encrypted"] = encodedData;
 
-            return data;
+            return package;
         }
     }
 }
