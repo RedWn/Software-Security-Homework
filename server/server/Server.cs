@@ -59,7 +59,7 @@ namespace server
             {
                 try
                 {
-                    ReceiveClientMessage(client);
+                    ReceiveMessageFromClient(client);
                 }
                 catch (Exception)
                 {
@@ -68,7 +68,7 @@ namespace server
             }
         }
 
-        public async void ReceiveClientMessage(Client client)
+        public async void ReceiveMessageFromClient(Client client)
         {
             Logger.Log(LogType.warning, client.port + " > message received");
             Logger.WriteLogs();
@@ -86,7 +86,7 @@ namespace server
                     {
                         ["publicKey"] = _PGPKeys.PublicKeyRing
                     };
-                    sendMessage(client, serializePackage("NA", "handshake", body));
+                    SendMessageToClient(client, new Package("NA", "handshake", body));
                     break;
                 case "sessionKey":
                     client.keys.sessionKey = Convert.FromBase64String(message.body["key"]);
@@ -94,29 +94,24 @@ namespace server
                     {
                         ["message"] = "Session key set!"
                     };
-                    sendMessage(client, serializePackage("AES", "generic", body));
+                    SendMessageToClient(client, new Package("AES", "generic", body));
                     break;
                 case "generic":
                     body = new Dictionary<string, string>
                     {
-                        ["message"] = "received!"
+                        ["message"] = "Received!"
                     };
-                    sendMessage(client, serializePackage("NA", "generic", body));
+                    SendMessageToClient(client, new Package("NA", "generic", body));
                     break;
             }
         }
 
-        public void sendMessage(Client client, string data)
+        public void SendMessageToClient(Client client, Package package)
         {
-            var package = Package.FromClientData(data);
             package = client.EncryptPackageBody(package);
             client.sWriter.WriteLine(JsonConvert.SerializeObject(package));
             client.sWriter.Flush();
             Console.WriteLine("> Sent!");
-        }
-        private string serializePackage(string encryption, string type, Dictionary<string, string> body)
-        {
-            return JsonConvert.SerializeObject(new Package(encryption, type, body));
         }
     }
 }

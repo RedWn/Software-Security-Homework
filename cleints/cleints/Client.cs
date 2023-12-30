@@ -16,19 +16,23 @@ namespace Cleints
         private string _identity;
         private bool _isConnected;
 
-
-        public Client(string ipAddress, int portNum)
+        public Client(string ip, int port)
         {
             _client = new TcpClient();
-            _client.Connect(ipAddress, portNum);
+            _sReader = new StreamReader(_client.GetStream(), Encoding.ASCII);
+            _client.Connect(ip, port);
             _identity = "test1";
 
-            keys = new ClientKeys();
-            keys.passphrase = Utils.GetRandomString(8);
-            PgpKeyPairGenerator generator = new(_identity, keys.passphrase.ToArray(), PublicKeyAlgorithm.RSA, PublicKeyLength.BITS_2048);
-            keys.PGPKeys = generator.Generate();
+            string passphrase = Utils.GetRandomString(8);
 
-            _sReader = new StreamReader(_client.GetStream(), Encoding.ASCII);
+            PgpKeyPairGenerator generator = new(_identity, passphrase.ToArray(), PublicKeyAlgorithm.RSA, PublicKeyLength.BITS_2048);
+
+            keys = new ClientKeys
+            {
+                passphrase = passphrase,
+                PGPKeys = generator.Generate()
+            };
+
             try
             {
                 sendHandshake();
@@ -44,16 +48,23 @@ namespace Cleints
         public void sendHandshake()
         {
             string publicKey = keys.PGPKeys.PublicKeyRing;
-            Dictionary<string, string> body = new Dictionary<string, string>();
-            body["publicKey"] = publicKey;
-            sendMessage(getSerializedPackage("NA", "handshake", body));
-            receiveMessage();
+            var body = new Dictionary<string, string>
+            {
+                ["publicKey"] = publicKey
+            };
+            sendMessageToServer(new Package("NA", "handshake", body));
+            receiveMessageFromServer();
+
             keys.sessionKey = Coder.getSessionKey();
             string sessionKey = Convert.ToBase64String(keys.sessionKey);
-            body = new Dictionary<string, string>();
-            body["key"] = sessionKey;
-            sendMessage(getSerializedPackage("PGP", "sessionKey", body));
-            receiveMessage();
+
+            body = new Dictionary<string, string>
+            {
+                ["key"] = sessionKey
+            };
+
+            sendMessageToServer(new Package("PGP", "sessionKey", body));
+            receiveMessageFromServer();
         }
 
         public void HandleCommunication()
@@ -61,37 +72,42 @@ namespace Cleints
             _isConnected = true;
             while (_isConnected)
             {
-                Logger.Log(LogType.info1, "Type the message and press Enter to send file data");
+                Logger.Log(LogType.info1, "Type your message and press Enter to send. (Message format should match tester.json)");
                 Logger.WriteLogs();
-                string sData = ReadMultipleLines();
-                sendMessage(sData);
-                receiveMessage();
+
+                string userMessage = readMultipleLinesFromConsole();
+
+                sendMessageToServer(Package.FromClientData(userMessage));
+                receiveMessageFromServer();
             }
         }
 
         #region ENCRYPTION
         public Package decryptMessage(Package data, string mode)
         {
-            string temp = new(data.body["encrypted"]);
+
+            string decodedBody = Coder.decode(data.body["encrypted"], mode, keys);
+
             data.body.Clear();
-            string decodedBody = Coder.decode(temp, mode, keys);
             data.body = JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedBody);
+
             Logger.Log(LogType.info2, "decryption complete!");
             Logger.Log(LogType.info2, JsonConvert.SerializeObject(data));
             Logger.WriteLogs();
+
             return data;
         }
 
-        public Package encryptData(Package data, string mode)
+        public Package encryptData(Package data)
         {
             string temp = JsonConvert.SerializeObject(data.body);
             data.body.Clear();
-            data.body["encrypted"] = Coder.encode(temp, mode, keys);
+            data.body["encrypted"] = Coder.encode(temp, data.encryption, keys);
             return data;
         }
         #endregion
 
-        public async void receiveMessage()
+        public async void receiveMessageFromServer()
         {
             string data = _sReader.ReadLine();
             Logger.Log(LogType.warning, "message recieved");
@@ -110,17 +126,16 @@ namespace Cleints
             }
         }
 
-        public void sendMessage(string data)
+        public void sendMessageToServer(Package package)
         {
-            Package? package = Package.FromClientData(data);
-            package = encryptData(package, package.encryption);
+            package = encryptData(package);
             _sWriter = new StreamWriter(_client.GetStream(), Encoding.ASCII);
             _sWriter.WriteLine(JsonConvert.SerializeObject(package));
             _sWriter.Flush();
             Console.WriteLine("> Sent!");
         }
 
-        public static string ReadMultipleLines()
+        private string readMultipleLinesFromConsole()
         {
             StringBuilder sb = new StringBuilder();
             string line;
@@ -131,10 +146,5 @@ namespace Cleints
             return sb.ToString();
         }
 
-
-        private string getSerializedPackage(string encryption, string type, Dictionary<string, string> body)
-        {
-            return JsonConvert.SerializeObject(new Package(encryption, type, body));
-        }
     }
 }

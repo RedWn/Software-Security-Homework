@@ -13,5 +13,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)User.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Package.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils.cs" />
   </ItemGroup>
 </Project>
