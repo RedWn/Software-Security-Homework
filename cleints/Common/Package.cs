@@ -5,9 +5,10 @@ public class Package
 
     public Dictionary<string, string>? body;
 
-    public Package(string encryption, string type)
+    public Package(string encryption, string type, Dictionary<string, string>? body = null)
     {
         this.encryption = encryption;
         this.type = type;
+        this.body = body;
     }
 }

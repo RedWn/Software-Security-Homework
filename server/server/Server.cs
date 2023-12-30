@@ -1,4 +1,5 @@
-﻿using Safester.CryptoLibrary.Api;
+﻿using Newtonsoft.Json;
+using Safester.CryptoLibrary.Api;
 using System.Net;
 using System.Net.Sockets;
 
@@ -16,7 +17,7 @@ namespace server
         public TcpServer(string ip, int port)
         {
             clients = new List<Client>();
-            _passphrase = RandomString(8);
+            _passphrase = getRandomString(8);
 
             _server = new TcpListener(IPAddress.Parse(ip), port);
             _server.Start();
@@ -45,7 +46,7 @@ namespace server
 
         public void HandleClientConnection(object obj)
         {
-            Client client = new(obj);
+            Client client = new((TcpClient)obj);
 
             client.keys.PGPKeys = _PGPKeys;
             client.keys.passphrase = _passphrase;
@@ -76,24 +77,24 @@ namespace server
             switch (message.type)
             {
                 case "handshake":
-                    message = client.decryptMessage(message, message.encryption);
+                    message = client.DecryptMessage(message, message.encryption);
                     client.keys.targetPublicKeyRing = message.body["publicKey"];
                     Dictionary<string, string> body = new Dictionary<string, string>();
                     body["publicKey"] = _PGPKeys.PublicKeyRing;
-                    sendMessage(client, messageBuilder("NA", "handshake", body));
+                    sendMessage(client, serializePackage("NA", "handshake", body));
                     break;
                 case "sessionKey":
-                    message = client.decryptMessage(message, message.encryption);
+                    message = client.DecryptMessage(message, message.encryption);
                     client.keys.sessionKey = Convert.FromBase64String(message.body["key"]);
                     body = new Dictionary<string, string>();
                     body["message"] = "Session key set!";
-                    sendMessage(client, messageBuilder("AES", "generic", body));
+                    sendMessage(client, serializePackage("AES", "generic", body));
                     break;
                 case "generic":
-                    message = client.decryptMessage(message, message.encryption);
+                    message = client.DecryptMessage(message, message.encryption);
                     body = new Dictionary<string, string>();
                     body["message"] = "received!";
-                    sendMessage(client, messageBuilder("NA", "generic", body));
+                    sendMessage(client, serializePackage("NA", "generic", body));
                     break;
             }
         }
@@ -102,26 +103,23 @@ namespace server
         {
             Package? package = packageMessage(data);
             package = client.encryptData(package, package.encryption);
-            client.sWriter.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(package));
+            client.sWriter.WriteLine(JsonConvert.SerializeObject(package));
             client.sWriter.Flush();
             Console.WriteLine("> Sent!");
         }
 
         public Package packageMessage(string jsonData)
         {
-            var decodedData = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonData);
-            var decodedBody = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedData["body"].ToString());
+            var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonData);
+            var decodedBody = JsonConvert.DeserializeObject<Dictionary<string, string>>(data["body"].ToString());
 
-            string? encryption = decodedData["encryption"].ToString();
-            string? type = decodedData["type"].ToString();
+            string? encryption = data["encryption"].ToString();
+            string? type = data["type"].ToString();
 
-            Package package = new(encryption, type);
-            package.body = decodedBody;
-
-            return package;
+            return new Package(encryption, type, decodedBody);
         }
 
-        public static string RandomString(int length)
+        private static string getRandomString(int length)
         {
             Random random = new Random();
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -129,11 +127,9 @@ namespace server
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        public string messageBuilder(string encryption, string type, Dictionary<string, string> body)
+        private string serializePackage(string encryption, string type, Dictionary<string, string> body)
         {
-            Package p = new(encryption, type);
-            p.body = body;
-            return Newtonsoft.Json.JsonConvert.SerializeObject(p);
+            return JsonConvert.SerializeObject(new Package(encryption, type, body));
         }
     }
 }

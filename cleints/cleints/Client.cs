@@ -1,26 +1,20 @@
-﻿using Org.BouncyCastle.Bcpg.OpenPgp;
+﻿using Newtonsoft.Json;
 using Safester.CryptoLibrary.Api;
-using System;
-using System.Collections.Generic;
-using System.Formats.Asn1;
-using System.Linq;
 using System.Net.Sockets;
-using System.Runtime.Intrinsics.Arm;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Cleints
 {
     class Client
     {
+        ClientKeys keys;
+
         private TcpClient _client;
         private StreamReader _sReader;
         private StreamWriter _sWriter;
+
         private string _identity;
         private bool _isConnected;
-        ClientKeys keys;
 
 
         public Client(string ipAddress, int portNum)
@@ -28,10 +22,12 @@ namespace Cleints
             _client = new TcpClient();
             _client.Connect(ipAddress, portNum);
             _identity = "test1";
+
             keys = new ClientKeys();
-            keys.passphrase = RandomString(8);
+            keys.passphrase = getRandomString(8);
             PgpKeyPairGenerator generator = new(_identity, keys.passphrase.ToArray(), PublicKeyAlgorithm.RSA, PublicKeyLength.BITS_2048);
             keys.PGPKeys = generator.Generate();
+
             _sReader = new StreamReader(_client.GetStream(), Encoding.ASCII);
             try
             {
@@ -50,13 +46,13 @@ namespace Cleints
             string publicKey = keys.PGPKeys.PublicKeyRing;
             Dictionary<string, string> body = new Dictionary<string, string>();
             body["publicKey"] = publicKey;
-            sendMessage(messageBuilder("NA", "handshake", body));
+            sendMessage(getSerializedPackage("NA", "handshake", body));
             receiveMessage();
             keys.sessionKey = Coder.getSessionKey();
             string sessionKey = Convert.ToBase64String(keys.sessionKey);
             body = new Dictionary<string, string>();
             body["key"] = sessionKey;
-            sendMessage(messageBuilder("PGP", "sessionKey", body));
+            sendMessage(getSerializedPackage("PGP", "sessionKey", body));
             receiveMessage();
         }
 
@@ -79,16 +75,16 @@ namespace Cleints
             string temp = new(data.body["encrypted"]);
             data.body.Clear();
             string decodedBody = Coder.decode(temp, mode, keys);
-            data.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedBody);
+            data.body = JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedBody);
             Logger.Log(LogType.info2, "decryption complete!");
-            Logger.Log(LogType.info2, Newtonsoft.Json.JsonConvert.SerializeObject(data));
+            Logger.Log(LogType.info2, JsonConvert.SerializeObject(data));
             Logger.WriteLogs();
             return data;
         }
 
         public Package encryptData(Package data, string mode)
         {
-            string temp = Newtonsoft.Json.JsonConvert.SerializeObject(data.body);
+            string temp = JsonConvert.SerializeObject(data.body);
             data.body.Clear();
             data.body["encrypted"] = Coder.encode(temp, mode, keys);
             return data;
@@ -119,16 +115,16 @@ namespace Cleints
             Package? package = packageMessage(data);
             package = encryptData(package, package.encryption);
             _sWriter = new StreamWriter(_client.GetStream(), Encoding.ASCII);
-            _sWriter.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(package));
+            _sWriter.WriteLine(JsonConvert.SerializeObject(package));
             _sWriter.Flush();
             Console.WriteLine("> Sent!");
         }
 
         public Package packageMessage(string data)
         {
-            Dictionary<string, object> dictionary = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
+            Dictionary<string, object> dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
             Package package = new(dictionary["encryption"].ToString(), dictionary["type"].ToString());
-            package.body = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(dictionary["body"].ToString());
+            package.body = JsonConvert.DeserializeObject<Dictionary<string, string>>(dictionary["body"].ToString());
             return package;
         }
 
@@ -143,7 +139,7 @@ namespace Cleints
             return sb.ToString();
         }
 
-        public static string RandomString(int length)
+        private static string getRandomString(int length)
         {
             Random random = new Random();
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -151,11 +147,9 @@ namespace Cleints
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        public string messageBuilder(string encryption, string type, Dictionary<string, string> body)
+        private string getSerializedPackage(string encryption, string type, Dictionary<string, string> body)
         {
-            Package p = new(encryption, type);
-            p.body = body;
-            return Newtonsoft.Json.JsonConvert.SerializeObject(p);
+            return JsonConvert.SerializeObject(new Package(encryption, type, body));
         }
     }
 }

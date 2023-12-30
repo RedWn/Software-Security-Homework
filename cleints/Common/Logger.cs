@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-public enum LogType // Types of log messages
+﻿public enum LogType // Types of log messages
 {
     info1,
     info2,
