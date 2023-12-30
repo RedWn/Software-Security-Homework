@@ -75,7 +75,7 @@ namespace server
 
             string data = client.sReader.ReadLine();
 
-            Package message = Package.FromClientData(data);
+            Package message = Package.FromJsonString(data);
             message = client.DecryptPackageBody(message);
 
             switch (message.type)

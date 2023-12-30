@@ -14,7 +14,7 @@ public class Package
         this.body = body;
     }
 
-    public static Package FromClientData(string jsonData)
+    public static Package FromJsonString(string jsonData)
     {
         var decodedData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonData);
         var decodedBody = JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedData["body"].ToString());

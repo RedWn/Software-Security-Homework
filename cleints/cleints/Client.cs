@@ -77,7 +77,7 @@ namespace Cleints
 
                 string userMessage = readMultipleLinesFromConsole();
 
-                sendMessageToServer(Package.FromClientData(userMessage));
+                sendMessageToServer(Package.FromJsonString(userMessage));
                 receiveMessageFromServer();
             }
         }
@@ -113,7 +113,7 @@ namespace Cleints
             Logger.Log(LogType.warning, "message recieved");
             Logger.WriteLogs();
 
-            Package message = Package.FromClientData(data);
+            Package message = Package.FromJsonString(data);
             switch (message.type)
             {
                 case "handshake":
