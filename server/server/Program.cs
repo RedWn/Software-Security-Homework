@@ -6,16 +6,19 @@ namespace Multi_Threaded_TCP
     {
         static void Main(string[] args)
         {
-            Logger.Log(LogType.info2, "Starting Multi-Threaded Server..... ");
-            Logger.Log(LogType.info1, "Enter Server IP :");
+            Logger.Log(LogType.info2, "[-- Server --]");
+            Logger.Log(LogType.info1, "Enter Server IP (default 127.0.0.1):");
             Logger.WriteLogs();
-            Logger.Log(LogType.info1, "Enter Port:");
 
             string ip = Console.ReadLine();
-            Logger.WriteLogs();
-            int port = Int32.Parse(Console.ReadLine());
+            if (ip == "") ip = "127.0.0.1";
 
-            TcpServer server = new TcpServer(ip, port);
+            Logger.Log(LogType.info1, "Enter Port (default 5001):");
+            Logger.WriteLogs();
+            string portString = Console.ReadLine();
+            int port = int.Parse(portString == "" ? "5001" : portString);
+
+            TcpServer server = new(ip, port);
             server.AcceptConnections();
         }
     }
