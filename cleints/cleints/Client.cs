@@ -1,9 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Safester.CryptoLibrary.Api;
+using server;
 using System.Net.Sockets;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Cleints
 {
@@ -14,6 +13,7 @@ namespace Cleints
         private TcpClient _client;
         private StreamReader _sReader;
         private StreamWriter _sWriter;
+
 
         private string _identity;
         private bool _isConnected;
@@ -35,17 +35,11 @@ namespace Cleints
                 PGPKeys = generator.Generate()
             };
 
-            try
-            {
-                sendHandshake();
-                enterUser();
-                HandleCommunication();
-            }
-            catch (Exception)
-            {
-                _isConnected = false;
-                _client.Close();
-            }
+            sendHandshake();
+            enterUser();
+            HandleCommunication();
+
+
         }
 
         public void sendHandshake()
@@ -54,7 +48,8 @@ namespace Cleints
             {
                 File.WriteAllText("storedKeys", JsonConvert.SerializeObject(keys));
             }
-            else {
+            else
+            {
                 keys = JsonConvert.DeserializeObject<ClientKeys>(File.ReadAllText("storedKeys"));
             }
             string publicKey = keys.PGPKeys.PublicKeyRing;
@@ -77,11 +72,13 @@ namespace Cleints
             receiveMessageFromServer();
         }
 
-        public void enterUser() {
+        public void enterUser()
+        {
             Logger.Log(LogType.info1, "Enter 1 to singup, 2 to login:");
             Logger.WriteLogs();
             string mode = Console.ReadLine();
-            switch (mode) {
+            switch (mode)
+            {
                 case "1":
                     signup();
                     break;
@@ -91,7 +88,8 @@ namespace Cleints
             }
         }
 
-        public void signup() {
+        public void signup()
+        {
             Logger.Log(LogType.info1, "Enter username:");
             Logger.WriteLogs();
             string username = Console.ReadLine();
@@ -116,7 +114,8 @@ namespace Cleints
             receiveMessageFromServer();
         }
 
-        public void login () {
+        public void login()
+        {
             while (true)
             {
                 Logger.Log(LogType.info1, "Enter username:");
@@ -133,12 +132,13 @@ namespace Cleints
                 };
                 sendMessageToServer(new Package("PGP", "login", body));
                 Package reply = receiveMessageFromServer();
-                if (reply.body["message"] == "success") {
-                    break;                
+                if (reply.body["message"] == "success")
+                {
+                    break;
                 }
             }
         }
-        
+
         public void HandleCommunication()
         {
             _isConnected = true;
@@ -172,9 +172,12 @@ namespace Cleints
 
         public Package encryptData(Package data)
         {
-            string temp = JsonConvert.SerializeObject(data.body);
+            string body = JsonConvert.SerializeObject(data.body);
+            data.signature = Signer.SignText(keys.PGPKeys.PrivateKeyRing, keys.passphrase, body);
+
             data.body.Clear();
-            data.body["encrypted"] = Coder.encode(temp, data.encryption, keys);
+            data.body["encrypted"] = Coder.encode(body, data.encryption, keys);
+
             return data;
         }
         #endregion

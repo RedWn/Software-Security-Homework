@@ -5,6 +5,8 @@ public class Package
     public string encryption;
     public string type;
 
+    public string? signature;
+
     public Dictionary<string, string>? body;
 
     public Package(string encryption, string type, Dictionary<string, string>? body = null)
@@ -19,7 +21,9 @@ public class Package
         var decodedData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonData);
         var decodedBody = JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedData["body"].ToString());
 
-        return new Package(decodedData["encryption"].ToString(), decodedData["type"].ToString(), decodedBody);
-    }
+        var p = new Package(decodedData["encryption"].ToString(), decodedData["type"].ToString(), decodedBody);
+        if (p.signature != null) p.signature = decodedData["signature"].ToString();
 
+        return p;
+    }
 }
