@@ -120,7 +120,8 @@ namespace server
                     {
                         body = new Dictionary<string, string>
                         {
-                            ["message"] = "success"
+                            ["message"] = "success",
+                            ["role"] = getRole(message.body["username"]),
                         };
                         SendMessageToClient(client, new Package("AES", "generic", body));
                     }
@@ -154,6 +155,12 @@ namespace server
         {
             Dictionary<string, DBEntry> keys = JsonConvert.DeserializeObject<Dictionary<string, DBEntry>>(File.ReadAllText("publickeys"));
             return (Convert.ToBase64String(Encoding.UTF8.GetBytes(password)) == keys[username].password);
+        }
+
+        public string getRole(string username)
+        {
+            Dictionary<string, DBEntry> keys = JsonConvert.DeserializeObject<Dictionary<string, DBEntry>>(File.ReadAllText("publickeys"));
+            return keys[username].role;
         }
 
         public void SendMessageToClient(Client client, Package package)
