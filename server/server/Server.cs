@@ -2,6 +2,7 @@
 using Safester.CryptoLibrary.Api;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 
 namespace server
 {
@@ -29,6 +30,13 @@ namespace server
 
             PgpKeyPairGenerator generator = new(_identity, _passphrase.ToArray(), PublicKeyAlgorithm.RSA, PublicKeyLength.BITS_2048);
             _PGPKeys = generator.Generate();
+            if (!File.Exists("publickeys")) {
+                Dictionary<string, string> stub = new Dictionary<string, string>
+                {
+                    ["username"] = "public key"
+                };
+                File.WriteAllText("publickeys", JsonConvert.SerializeObject(stub));
+            }
         }
 
         public void AcceptConnections()
@@ -96,6 +104,14 @@ namespace server
                     };
                     SendMessageToClient(client, new Package("AES", "generic", body));
                     break;
+                case "login":
+                    addKeyToFile(message.body["username"], client.keys.PGPKeys.PublicKeyRing);        
+                    body = new Dictionary<string, string>
+                    {
+                        ["message"] = "User Added!"
+                    };
+                    SendMessageToClient(client, new Package("AES", "generic", body));
+                    break;
                 case "generic":
                     body = new Dictionary<string, string>
                     {
@@ -106,6 +122,12 @@ namespace server
             }
         }
 
+        public void addKeyToFile(string username, string key) {
+            Dictionary<string, string> keys = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText("publickeys"));
+            keys[username] = key;
+            File.Delete("publickeys");
+            File.WriteAllText("publickeys", JsonConvert.SerializeObject(keys));
+        }
         public void SendMessageToClient(Client client, Package package)
         {
             package = client.EncryptPackageBody(package);

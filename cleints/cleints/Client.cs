@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
 using Safester.CryptoLibrary.Api;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Cleints
 {
@@ -19,8 +21,8 @@ namespace Cleints
         public Client(string ip, int port)
         {
             _client = new TcpClient();
-            _sReader = new StreamReader(_client.GetStream(), Encoding.ASCII);
             _client.Connect(ip, port);
+            _sReader = new StreamReader(_client.GetStream(), Encoding.ASCII);
             _identity = "test1";
 
             string passphrase = Utils.GetRandomString(8);
@@ -36,6 +38,7 @@ namespace Cleints
             try
             {
                 sendHandshake();
+                login();
                 HandleCommunication();
             }
             catch (Exception)
@@ -47,6 +50,13 @@ namespace Cleints
 
         public void sendHandshake()
         {
+            if (!File.Exists("storedKeys"))
+            {
+                File.WriteAllText("storedKeys", JsonConvert.SerializeObject(keys));
+            }
+            else {
+                keys = JsonConvert.DeserializeObject<ClientKeys>(File.ReadAllText("storedKeys"));
+            }
             string publicKey = keys.PGPKeys.PublicKeyRing;
             var body = new Dictionary<string, string>
             {
@@ -67,6 +77,23 @@ namespace Cleints
             receiveMessageFromServer();
         }
 
+        public void login () {
+            Logger.Log(LogType.info1, "Enter username:");
+            Logger.WriteLogs();
+            string username = Console.ReadLine();
+            Logger.Log(LogType.info1, "Enter password:");
+            Logger.WriteLogs();
+            string password = Console.ReadLine();
+
+            var body = new Dictionary<string, string>
+            {
+                ["username"] = username,
+                ["password"] = password
+            };
+            sendMessageToServer(new Package("PGP", "login", body));
+
+        }
+        
         public void HandleCommunication()
         {
             _isConnected = true;
