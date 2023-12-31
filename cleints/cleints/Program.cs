@@ -19,6 +19,9 @@ namespace Clients
             int port = int.Parse(portString == "" ? "5001" : portString);
 
             Client client = new(ip, port);
+            
+            // Certificate certificate = new Certificate();
+            // certificate.csrClient();
         }
     }
 }
