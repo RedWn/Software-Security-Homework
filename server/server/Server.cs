@@ -66,7 +66,14 @@ namespace server
 
             while (client.client.Connected)
             {
-                ReceiveMessageFromClient(client);
+                try
+                {
+                    ReceiveMessageFromClient(client);
+                }
+                catch (Exception ex)
+                {
+                    client.client.Close();
+                }
             }
         }
 
