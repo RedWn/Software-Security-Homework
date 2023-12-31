@@ -38,7 +38,7 @@ namespace Cleints
             try
             {
                 sendHandshake();
-                login();
+                enterUser();
                 HandleCommunication();
             }
             catch (Exception)
@@ -77,21 +77,66 @@ namespace Cleints
             receiveMessageFromServer();
         }
 
-        public void login () {
+        public void enterUser() {
+            Logger.Log(LogType.info1, "Enter 1 to singup, 2 to login:");
+            Logger.WriteLogs();
+            string mode = Console.ReadLine();
+            switch (mode) {
+                case "1":
+                    signup();
+                    break;
+                case "2":
+                    login();
+                    break;
+            }
+        }
+
+        public void signup() {
             Logger.Log(LogType.info1, "Enter username:");
             Logger.WriteLogs();
             string username = Console.ReadLine();
             Logger.Log(LogType.info1, "Enter password:");
             Logger.WriteLogs();
             string password = Console.ReadLine();
+            Logger.Log(LogType.info1, "Enter role (1 for doctor, 2 for student):");
+            Logger.WriteLogs();
+            string role = Console.ReadLine();
+            if (role == "1")
+                role = "doctor";
+            else
+                role = "student";
 
             var body = new Dictionary<string, string>
             {
                 ["username"] = username,
-                ["password"] = password
+                ["password"] = password,
+                ["role"] = role
             };
-            sendMessageToServer(new Package("PGP", "login", body));
+            sendMessageToServer(new Package("PGP", "signup", body));
+            receiveMessageFromServer();
+        }
 
+        public void login () {
+            while (true)
+            {
+                Logger.Log(LogType.info1, "Enter username:");
+                Logger.WriteLogs();
+                string username = Console.ReadLine();
+                Logger.Log(LogType.info1, "Enter password:");
+                Logger.WriteLogs();
+                string password = Console.ReadLine();
+
+                var body = new Dictionary<string, string>
+                {
+                    ["username"] = username,
+                    ["password"] = password
+                };
+                sendMessageToServer(new Package("PGP", "login", body));
+                Package reply = receiveMessageFromServer();
+                if (reply.body["message"] == "success") {
+                    break;                
+                }
+            }
         }
         
         public void HandleCommunication()
@@ -134,7 +179,7 @@ namespace Cleints
         }
         #endregion
 
-        public async void receiveMessageFromServer()
+        public Package receiveMessageFromServer()
         {
             string data = _sReader.ReadLine();
             Logger.Log(LogType.warning, "message recieved");
@@ -148,9 +193,10 @@ namespace Cleints
                     keys.targetPublicKeyRing = message.body["publicKey"];
                     break;
                 case "generic":
-                    decryptMessage(message, message.encryption);
+                    message = decryptMessage(message, message.encryption);
                     break;
             }
+            return message;
         }
 
         public void sendMessageToServer(Package package)

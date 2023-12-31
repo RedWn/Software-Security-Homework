@@ -1,8 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Safester.CryptoLibrary.Api;
+using System.Data;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Text;
 
 namespace server
 {
@@ -31,10 +34,10 @@ namespace server
             PgpKeyPairGenerator generator = new(_identity, _passphrase.ToArray(), PublicKeyAlgorithm.RSA, PublicKeyLength.BITS_2048);
             _PGPKeys = generator.Generate();
             if (!File.Exists("publickeys")) {
-                Dictionary<string, string> stub = new Dictionary<string, string>
+                Dictionary<string, DBEntry> stub = new Dictionary<string, DBEntry>
                 {
-                    ["username"] = "public key"
-                };
+                    ["username"] = new("role", "public key", "password")
+            };
                 File.WriteAllText("publickeys", JsonConvert.SerializeObject(stub));
             }
         }
@@ -76,7 +79,7 @@ namespace server
             }
         }
 
-        public async void ReceiveMessageFromClient(Client client)
+        public Package ReceiveMessageFromClient(Client client)
         {
             Logger.Log(LogType.warning, client.port + " > message received");
             Logger.WriteLogs();
@@ -104,13 +107,30 @@ namespace server
                     };
                     SendMessageToClient(client, new Package("AES", "generic", body));
                     break;
-                case "login":
-                    addKeyToFile(message.body["username"], client.keys.PGPKeys.PublicKeyRing);        
+                case "signup":
+                    addKeyToFile(message.body["username"], message.body["role"], client.keys.PGPKeys.PublicKeyRing, message.body["password"]);        
                     body = new Dictionary<string, string>
                     {
                         ["message"] = "User Added!"
                     };
                     SendMessageToClient(client, new Package("AES", "generic", body));
+                    break;
+                case "login":
+                    if (checkPassword(message.body["username"], message.body["password"]))
+                    {
+                        body = new Dictionary<string, string>
+                        {
+                            ["message"] = "success"
+                        };
+                        SendMessageToClient(client, new Package("AES", "generic", body));
+                    }
+                    else {
+                        body = new Dictionary<string, string>
+                        {
+                            ["message"] = "wrong password"
+                        };
+                        SendMessageToClient(client, new Package("AES", "generic", body));
+                    }
                     break;
                 case "generic":
                     body = new Dictionary<string, string>
@@ -120,14 +140,22 @@ namespace server
                     SendMessageToClient(client, new Package("NA", "generic", body));
                     break;
             }
+            return message;
         }
 
-        public void addKeyToFile(string username, string key) {
-            Dictionary<string, string> keys = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText("publickeys"));
-            keys[username] = key;
+        public void addKeyToFile(string username, string role, string key, string password) {
+            Dictionary<string, DBEntry> keys = JsonConvert.DeserializeObject<Dictionary<string, DBEntry>>(File.ReadAllText("publickeys"));
+            keys[username] = new(role, key, Convert.ToBase64String(Encoding.UTF8.GetBytes(password)));
             File.Delete("publickeys");
             File.WriteAllText("publickeys", JsonConvert.SerializeObject(keys));
         }
+
+        public bool checkPassword(string username, string password)
+        {
+            Dictionary<string, DBEntry> keys = JsonConvert.DeserializeObject<Dictionary<string, DBEntry>>(File.ReadAllText("publickeys"));
+            return (Convert.ToBase64String(Encoding.UTF8.GetBytes(password)) == keys[username].password);
+        }
+
         public void SendMessageToClient(Client client, Package package)
         {
             package = client.EncryptPackageBody(package);
