@@ -6,7 +6,7 @@ public class Package
     public string type;
     public string? signature;
 
-    public Dictionary<string, string> body = [];
+    public Dictionary<string, string> body = new Dictionary<string, string>();
 
 
     public Package(string encryption, string type, Dictionary<string, string> body, string? signature = null)
