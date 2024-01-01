@@ -5,7 +5,7 @@ using System.Text;
 
 namespace server
 {
-    internal class Client
+    public class Connection
     {
         public TcpClient client;
         public StreamWriter sWriter;
@@ -14,7 +14,7 @@ namespace server
 
         public int port;
 
-        public Client(TcpClient tcpClient)
+        public Connection(TcpClient tcpClient)
         {
             client = tcpClient;
 
