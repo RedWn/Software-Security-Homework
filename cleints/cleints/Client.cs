@@ -1,7 +1,11 @@
-﻿using Newtonsoft.Json;
+﻿using Clients;
+using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1.Cmp;
 using Safester.CryptoLibrary.Api;
 using server;
+using System.Collections;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Cleints
@@ -18,8 +22,9 @@ namespace Cleints
         private string _identity;
         private bool _isConnected;
         private string _role;
+        private string certificate;
 
-        public Client(string ip, int port)
+        public Client(string ip, int port, int type)
         {
 
             _client = new TcpClient();
@@ -32,27 +37,44 @@ namespace Cleints
 
             PgpKeyPairGenerator generator = new(_identity, passphrase.ToArray(), PublicKeyAlgorithm.RSA, PublicKeyLength.BITS_2048);
 
+            RSA rsa = RSA.Create();
             keys = new ClientKeys
             {
                 passphrase = passphrase,
-                PGPKeys = generator.Generate()
+                PGPKeys = generator.Generate(),
+                certificateRSAKey = rsa.ExportSubjectPublicKeyInfo(),
             };
-
-            sendHandshake();
-            enterUser();
-            HandleCommunication();
+            //try { 
+            if (type == 1)
+            {
+                sendHandshake();
+                enterUser();
+                authCertificate();
+                HandleCommunication();
+            }
+            else
+            {
+                sendCSR();
+                authCertificate();
+                Program.Main(Array.Empty<string>());
+            }
+            /*}catch (Exception e)
+            {
+                _isConnected = false;
+                _client.Close();
+            }*/
         }
 
         public void sendHandshake()
         {
-            if (!File.Exists("storedKeys"))
+            /*if (!File.Exists("storedKeys"))
             {
                 File.WriteAllText("storedKeys", JsonConvert.SerializeObject(keys));
             }
             else
             {
                 keys = JsonConvert.DeserializeObject<ClientKeys>(File.ReadAllText("storedKeys"));
-            }
+            }*/
             string publicKey = keys.PGPKeys.PublicKeyRing;
             var body = new Dictionary<string, string>
             {
@@ -137,12 +159,35 @@ namespace Cleints
                 sendMessageToServer(new Package("PGP", "login", body));
 
                 Package reply = receiveMessageFromServer();
-                if (reply.body["message"] == "success")
+                if (reply.body["message"] == "Success")
                 {
                     _role = reply.body["role"];
                     break;
                 }
             }
+        }
+
+        public void sendCSR()
+        {
+            if (_role != "doctor")
+                return;
+            var body = new Dictionary<string, string>
+            {
+                ["publicKey"] = Encoding.UTF8.GetString(keys.certificateRSAKey)
+            };
+            sendMessageToServer(new Package("PGP", "CSR", body));
+            Package reply = receiveMessageFromServer();
+        }
+
+        public void authCertificate()
+        {
+            if (_role != "doctor")
+                return;
+            var body = new Dictionary<string, string>
+            {
+                ["certificate"] = certificate
+            };
+            sendMessageToServer(new Package("AES", "CA", body));
         }
 
         public void HandleCommunication()
@@ -205,8 +250,27 @@ namespace Cleints
                 case "generic":
                     message = decryptMessage(message, message.encryption);
                     break;
+                case "challenge":
+                    message = decryptMessage(message, message.encryption);
+                    var body = new Dictionary<string, string>
+                    {
+                        ["output"] = challenge(message.body["input"])
+                    };
+                    sendMessageToServer(new Package("PGP", "challenge", body));
+                    break;
+                case "certificate":
+                    message = decryptMessage(message, message.encryption);
+                    certificate = message.body["certificate"];
+                    break;
             }
             return message;
+        }
+
+        private string challenge(string input)
+        {
+            int x = int.Parse(input);
+            int ans = (int)(14 * Math.Pow(x, 2) + 5 * x + 3);
+            return ans.ToString();
         }
 
         public void sendMessageToServer(Package package)
