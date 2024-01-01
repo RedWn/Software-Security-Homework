@@ -124,7 +124,7 @@ public class Coder
         List<PgpPublicKey> keys = new List<PgpPublicKey>();
         keys.Add(PgpPublicKeyGetter.ReadPublicKey(publicKeyRing));
         string outText = encryptor.Encrypt(keys, plainData);
-        Console.WriteLine("Encryption done.");
+        //Console.WriteLine("Encryption done.");
         return outText;
     }
 
@@ -132,8 +132,8 @@ public class Coder
     {
         Decryptor decryptor = new Decryptor(privateKeyRing, passphrase.ToArray());
         string decryptedText = decryptor.Decrypt(cipherData);
-        Console.WriteLine("Decryption integrity check status: " + decryptor.Verify);
-        Console.WriteLine(decryptedText);
+        //Console.WriteLine("Decryption integrity check status: " + decryptor.Verify);
+        //Console.WriteLine(decryptedText);
         return decryptedText;
     }
 

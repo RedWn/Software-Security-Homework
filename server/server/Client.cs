@@ -33,8 +33,7 @@ namespace server
             package.body.Clear();
             package.body = JsonConvert.DeserializeObject<Dictionary<string, string>>(decryptedBody);
 
-            Logger.Log(LogType.info2, "decryption complete!");
-            Logger.Log(LogType.info2, JsonConvert.SerializeObject(package));
+            Logger.Log(LogType.info2, $"Decryption complete: {JsonConvert.SerializeObject(package)}");
             Logger.WriteLogs();
 
             return package;

@@ -17,12 +17,15 @@ namespace Cleints
 
         private string _identity;
         private bool _isConnected;
+        private string _role;
 
         public Client(string ip, int port)
         {
+
             _client = new TcpClient();
             _client.Connect(ip, port);
             _sReader = new StreamReader(_client.GetStream(), Encoding.ASCII);
+
             _identity = "test1";
 
             string passphrase = Utils.GetRandomString(8);
@@ -38,8 +41,6 @@ namespace Cleints
             sendHandshake();
             enterUser();
             HandleCommunication();
-
-
         }
 
         public void sendHandshake()
@@ -74,7 +75,7 @@ namespace Cleints
 
         public void enterUser()
         {
-            Logger.Log(LogType.info1, "Enter 1 to singup, 2 to login:");
+            Logger.Log(LogType.info1, "Enter 1 to Signup, 2 to login:");
             Logger.WriteLogs();
             string mode = Console.ReadLine();
             switch (mode)
@@ -93,22 +94,23 @@ namespace Cleints
             Logger.Log(LogType.info1, "Enter username:");
             Logger.WriteLogs();
             string username = Console.ReadLine();
+
             Logger.Log(LogType.info1, "Enter password:");
             Logger.WriteLogs();
             string password = Console.ReadLine();
+
             Logger.Log(LogType.info1, "Enter role (1 for doctor, 2 for student):");
             Logger.WriteLogs();
-            string role = Console.ReadLine();
-            if (role == "1")
-                role = "doctor";
-            else
-                role = "student";
+            string roleInput = Console.ReadLine();
+
+            if (roleInput == "1") _role = "doctor";
+            else _role = "student";
 
             var body = new Dictionary<string, string>
             {
                 ["username"] = username,
                 ["password"] = password,
-                ["role"] = role
+                ["role"] = _role
             };
             sendMessageToServer(new Package("PGP", "signup", body));
             receiveMessageFromServer();
@@ -121,6 +123,7 @@ namespace Cleints
                 Logger.Log(LogType.info1, "Enter username:");
                 Logger.WriteLogs();
                 string username = Console.ReadLine();
+
                 Logger.Log(LogType.info1, "Enter password:");
                 Logger.WriteLogs();
                 string password = Console.ReadLine();
@@ -130,10 +133,13 @@ namespace Cleints
                     ["username"] = username,
                     ["password"] = password
                 };
+
                 sendMessageToServer(new Package("PGP", "login", body));
+
                 Package reply = receiveMessageFromServer();
                 if (reply.body["message"] == "success")
                 {
+                    _role = reply.body["role"];
                     break;
                 }
             }
@@ -149,7 +155,7 @@ namespace Cleints
 
                 string userMessage = readMultipleLinesFromConsole();
 
-                sendMessageToServer(Package.FromJsonString(userMessage));
+                sendMessageToServer(Package.FromJSON(userMessage));
                 receiveMessageFromServer();
             }
         }
@@ -163,8 +169,7 @@ namespace Cleints
             data.body.Clear();
             data.body = JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedBody);
 
-            Logger.Log(LogType.info2, "decryption complete!");
-            Logger.Log(LogType.info2, JsonConvert.SerializeObject(data));
+            Logger.Log(LogType.info2, $"Decryption complete: {JsonConvert.SerializeObject(data)}");
             Logger.WriteLogs();
 
             return data;
@@ -178,6 +183,8 @@ namespace Cleints
             data.body.Clear();
             data.body["encrypted"] = Coder.encode(body, data.encryption, keys);
 
+            if (_role != null) data.body["role"] = _role;
+
             return data;
         }
         #endregion
@@ -185,10 +192,10 @@ namespace Cleints
         public Package receiveMessageFromServer()
         {
             string data = _sReader.ReadLine();
-            Logger.Log(LogType.warning, "message recieved");
+            Logger.Log(LogType.warning, "Message recieved from server");
             Logger.WriteLogs();
 
-            Package message = Package.FromJsonString(data);
+            Package message = Package.FromJSON(data);
             switch (message.type)
             {
                 case "handshake":
@@ -208,7 +215,7 @@ namespace Cleints
             _sWriter = new StreamWriter(_client.GetStream(), Encoding.ASCII);
             _sWriter.WriteLine(JsonConvert.SerializeObject(package));
             _sWriter.Flush();
-            Console.WriteLine("> Sent!");
+            //Console.WriteLine("> Sent!");
         }
 
         private string readMultipleLinesFromConsole()

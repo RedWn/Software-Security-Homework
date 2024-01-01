@@ -9,8 +9,8 @@ namespace server
     class TcpServer
     {
         private bool _isRunning;
-        private string _passphrase;
         private string _identity;
+        private string _passphrase;
 
         private TcpListener _server;
         private List<Client> _clients;
@@ -30,6 +30,7 @@ namespace server
 
             PgpKeyPairGenerator generator = new(_identity, _passphrase.ToArray(), PublicKeyAlgorithm.RSA, PublicKeyLength.BITS_2048);
             _PGPKeys = generator.Generate();
+
             if (!File.Exists("publickeys"))
             {
                 Dictionary<string, DBEntry> stub = new()
@@ -44,11 +45,13 @@ namespace server
         {
             while (_isRunning)
             {
-                Logger.Log(LogType.info2, "Waiting for a connection...");
+                Logger.Log(LogType.info2, "Waiting for connections...");
                 Logger.WriteLogs();
 
                 TcpClient newClient = _server.AcceptTcpClient();
-                Console.WriteLine("Connected!");
+
+                Logger.Log(LogType.info2, $"Client connected from {newClient.Client.LocalEndPoint}");
+                Logger.WriteLogs();
 
                 Thread t = new(new ParameterizedThreadStart(HandleClientConnection));
                 t.Start(newClient);
@@ -70,27 +73,38 @@ namespace server
                 {
                     ReceiveMessageFromClient(client);
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
+                    Console.WriteLine(e);
                     client.client.Close();
                 }
             }
         }
 
-        public Package ReceiveMessageFromClient(Client client)
+        public void ReceiveMessageFromClient(Client client)
         {
-            Logger.Log(LogType.warning, client.port + " > message received");
+            Logger.Log(LogType.warning, $"Message received from {client.client.Client.LocalEndPoint}");
             Logger.WriteLogs();
 
             string data = client.sReader.ReadLine();
 
-            Package message = Package.FromJsonString(data);
+            Package message = Package.FromJSON(data);
             message = client.DecryptPackageBody(message);
 
-            if (message.signature != null)
+            if (message.signature != null && message.body != null && message.body.TryGetValue("role", out string? value) && value == "doctor")
             {
+                Console.WriteLine("HELLLLO DOCTORORROROR");
                 bool isSignatureVerified = Signer.VerifySignature(client.keys.PGPKeys.PublicKeyRing, JsonConvert.SerializeObject(message.body), message.signature);
-                // TODO: Here kick user if signature is invalid.
+                if (!isSignatureVerified)
+                {
+                    var body = new Dictionary<string, string>
+                    {
+                        ["message"] = "Invalid signature"
+                    };
+                    SendMessageToClient(client, new Package("NA", "generic", body));
+
+                    return;
+                }
             }
 
 
@@ -125,7 +139,7 @@ namespace server
                     {
                         body = new Dictionary<string, string>
                         {
-                            ["message"] = "success",
+                            ["message"] = "Success",
                             ["role"] = getRole(message.body["username"]),
                         };
                         SendMessageToClient(client, new Package("AES", "generic", body));
@@ -134,7 +148,7 @@ namespace server
                     {
                         body = new Dictionary<string, string>
                         {
-                            ["message"] = "wrong password"
+                            ["message"] = "Wrong password"
                         };
                         SendMessageToClient(client, new Package("AES", "generic", body));
                     }
@@ -147,7 +161,6 @@ namespace server
                     SendMessageToClient(client, new Package("NA", "generic", body));
                     break;
             }
-            return message;
         }
 
         public void addKeyToFile(string username, string role, string key, string password)
@@ -175,7 +188,7 @@ namespace server
             package = client.EncryptPackageBody(package);
             client.sWriter.WriteLine(JsonConvert.SerializeObject(package));
             client.sWriter.Flush();
-            Console.WriteLine("> Sent!");
+            //Console.WriteLine("> Sent!");
         }
     }
 }
