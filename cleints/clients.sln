@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "server", "..\server\server\
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "common", "Common\common.shproj", "{F0BF53D8-757B-49BA-B932-48709AAFE84A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CA", "..\CA\CA.csproj", "{570853F7-D8C0-446D-AEF9-798F6F0BE576}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +25,10 @@ Global
 		{15E35A07-14D8-444B-9FFB-05349A723A64}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15E35A07-14D8-444B-9FFB-05349A723A64}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15E35A07-14D8-444B-9FFB-05349A723A64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{570853F7-D8C0-446D-AEF9-798F6F0BE576}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{570853F7-D8C0-446D-AEF9-798F6F0BE576}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{570853F7-D8C0-446D-AEF9-798F6F0BE576}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{570853F7-D8C0-446D-AEF9-798F6F0BE576}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -33,6 +39,7 @@ Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Common\Common.projitems*{15e35a07-14d8-444b-9ffb-05349a723a64}*SharedItemsImports = 5
 		Common\Common.projitems*{4c2ed7d6-1a76-446c-be31-15145896465d}*SharedItemsImports = 5
+		Common\Common.projitems*{570853f7-d8c0-446d-aef9-798f6f0be576}*SharedItemsImports = 5
 		Common\Common.projitems*{f0bf53d8-757b-49ba-b932-48709aafe84a}*SharedItemsImports = 13
 	EndGlobalSection
 EndGlobal
