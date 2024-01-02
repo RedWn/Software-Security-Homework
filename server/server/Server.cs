@@ -93,7 +93,7 @@ namespace server
 
             if (message.signature != null && message.body != null && message.body.TryGetValue("role", out string? value) && value == "doctor")
             {
-                Console.WriteLine("HELLLLO DOCTORORROROR");
+                Console.WriteLine("User is Doctor.");
                 bool isSignatureVerified = Signer.VerifySignature(client.keys.PGPKeys.PublicKeyRing, JsonConvert.SerializeObject(message.body), message.signature);
                 if (!isSignatureVerified)
                 {

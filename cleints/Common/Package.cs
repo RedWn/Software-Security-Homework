@@ -23,7 +23,7 @@ public class Package
         var decodedBody = JsonConvert.DeserializeObject<Dictionary<string, string>>(decodedData["body"].ToString());
 
         var p = new Package(decodedData["encryption"].ToString(), decodedData["type"].ToString(), decodedBody);
-        if (decodedBody.TryGetValue("signature", out string? signature)) p.signature = decodedData["signature"].ToString();
+        if (decodedData.TryGetValue("signature", out var signature)) p.signature = decodedData["signature"].ToString();
 
         return p;
     }
