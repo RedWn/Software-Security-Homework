@@ -153,4 +153,5 @@ public class ClientKeys
     public byte[] sessionKey;
     public string passphrase;
     public string targetPublicKeyRing;
+    public byte[] certificateRSAKey;
 }
