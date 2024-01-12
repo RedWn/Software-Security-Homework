@@ -26,13 +26,13 @@ namespace CA
 
         private static Dictionary<string, int> _challengeInputs = new Dictionary<string, int>();
 
-        public static string generateCertificate(byte[] publicKey)
+        public static string generateCertificate(String name, byte[] publicKey)
         {
             RSA puk = RSA.Create();
             puk.ImportRSAPublicKey(publicKey, out _);
             RSA prk = RSA.Create();
             prk.ImportRSAPrivateKey(publicKey, out _);
-            CertificateRequest req = new CertificateRequest("test1", puk, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            CertificateRequest req = new CertificateRequest(name, puk, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             X509Certificate2 certificate = req.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddYears(1));
 
             // Export the certificate
@@ -157,9 +157,10 @@ namespace CA
                 case "challenge":
                     if (CA.passChallenge(int.Parse(message.body["key"]), _currentUser))
                     {
+                        String name = "Josh@gmail.com";
                         body = new Dictionary<string, string>
                         {
-                            ["certificate"] = CA.generateCertificate(client.keys.certificateRSAKey)
+                            ["certificate"] = CA.generateCertificate(name, client.keys.certificateRSAKey)
                         };
                         SendMessage(client, new Package("NA", "certificate", body));
                     }
