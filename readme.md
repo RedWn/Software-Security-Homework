@@ -23,7 +23,7 @@ The project was made using C# as a .NET console app with the following packages:
 There are 4 csprojects in the repo:
 
 1. Server:
-   includes the driver class Program and server specific classes: - Connection: an instance that contains all of a connected client information - DBEntry a model to read/write to a file for storage - Server: the main class for all the server logic
+   includes the driver class Program and server specific classes : - Connection: an instance that contains all of a connected client information - DBEntry a model to read/write to a file for storage - Server: the main class for all the server logic
 
 2. Client:
    includes the driver class Program and client class: - Client: the main class for all the client logic
